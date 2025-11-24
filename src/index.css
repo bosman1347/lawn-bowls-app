@@ -1,0 +1,29 @@
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #F5F5F5;
+  color: #222;
+}
+
+.page-container {
+  padding: 1.5rem;
+}
+
+.page h1, .page h2 {
+  color: #1C5D3A;
+}
+
+button {
+  background-color: #3BAE5A;
+  border: none;
+  padding: 0.7rem 1.2rem;
+  font-size: 1rem;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #339D50;
+}
