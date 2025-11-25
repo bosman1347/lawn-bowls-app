@@ -117,3 +117,34 @@ export default function Standings() {
             <th>D</th>
             <th>L</th>
             <th>SF</th>
+            <th>SA</th>
+            <th>SD</th>
+            <th>Pts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {table.map((t, i) => (
+            <tr key={i} style={getRowStyle(i)}>
+              <td>{t.team}</td>
+              <td>{t.played}</td>
+              <td>{t.wins}</td>
+              <td>{t.draws}</td>
+              <td>{t.losses}</td>
+              <td>{t.shotsFor}</td>
+              <td>{t.shotsAgainst}</td>
+              <td>{t.shotDiff}</td>
+              <td>{t.points}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <button
+        onClick={resetTournament}
+        style={{ marginTop: "1.5rem", padding: "0.5rem 1rem" }}
+      >
+        Reset Tournament
+      </button>
+    </div>
+  );
+}
