@@ -24,16 +24,26 @@ export default function Matches() {
     );
   }
 
-  const handleSaveScore = (roundIndex, matchIndex, scoreA, scoreB) => {
-    const updated = [...results];
+  // Determine match colour (win/loss/draw)
+  const getMatchStyle = (existing) => {
+    if (!existing) return {};
+    if (existing.scoreA > existing.scoreB)
+      return { background: "#e6ffe6" }; // A wins
+    if (existing.scoreB > existing.scoreA)
+      return { background: "#ffe6e6" }; // B wins
+    return { background: "#fff6cc" }; // draw
+  };
 
+  // Auto-save on typing
+  const handleTyping = (roundIndex, matchIndex, scoreA, scoreB) => {
+    const updated = [...results];
     if (!updated[roundIndex]) updated[roundIndex] = [];
 
     updated[roundIndex][matchIndex] = {
-      scoreA: Number(scoreA),
-      scoreB: Number(scoreB),
       teamA: matches[roundIndex][matchIndex].teamA,
       teamB: matches[roundIndex][matchIndex].teamB,
+      scoreA: Number(scoreA),
+      scoreB: Number(scoreB),
     };
 
     setResults(updated);
@@ -41,11 +51,19 @@ export default function Matches() {
 
   return (
     <div className="page">
-      <h2>Match Schedule & Scoring</h2>
+      <h2>Match Scoring</h2>
 
       {matches.map((round, r) => (
-        <div key={r} style={{ marginBottom: "1.5rem" }}>
-          <h3>Round {r + 1}</h3>
+        <div key={r} style={{ marginBottom: "2rem" }}>
+          <h3
+            style={{
+              background: "#1C5D3A",
+              color: "white",
+              padding: "0.5rem",
+            }}
+          >
+            Round {r + 1}
+          </h3>
 
           {round.map((m, i) => {
             const existing = results[r]?.[i];
@@ -57,43 +75,45 @@ export default function Matches() {
                   marginBottom: "0.5rem",
                   padding: "0.5rem",
                   border: "1px solid #ccc",
+                  ...getMatchStyle(existing),
                 }}
               >
-                <div>
-                  <strong>
-                    {m.teamA} vs {m.teamB}
-                  </strong>
-                </div>
+                <strong>
+                  {m.teamA} vs {m.teamB}
+                </strong>
 
                 <div style={{ marginTop: "0.5rem" }}>
                   <input
                     type="number"
-                    placeholder={m.teamA + " score"}
                     defaultValue={existing?.scoreA ?? ""}
+                    onInput={(e) =>
+                      handleTyping(
+                        r,
+                        i,
+                        e.target.value,
+                        document.getElementById(`scoreB-${r}-${i}`)?.value || 0
+                      )
+                    }
                     id={`scoreA-${r}-${i}`}
+                    placeholder="Score A"
                     style={{ width: "60px", marginRight: "1rem" }}
                   />
 
                   <input
                     type="number"
-                    placeholder={m.teamB + " score"}
                     defaultValue={existing?.scoreB ?? ""}
-                    id={`scoreB-${r}-${i}`}
-                    style={{ width: "60px", marginRight: "1rem" }}
-                  />
-
-                  <button
-                    onClick={() =>
-                      handleSaveScore(
+                    onInput={(e) =>
+                      handleTyping(
                         r,
                         i,
-                        document.getElementById(`scoreA-${r}-${i}`).value,
-                        document.getElementById(`scoreB-${r}-${i}`).value
+                        document.getElementById(`scoreA-${r}-${i}`)?.value || 0,
+                        e.target.value
                       )
                     }
-                  >
-                    Save
-                  </button>
+                    id={`scoreB-${r}-${i}`}
+                    placeholder="Score B"
+                    style={{ width: "60px" }}
+                  />
                 </div>
               </div>
             );
