@@ -6,6 +6,8 @@ import NewTournament from "./pages/NewTournament.jsx";
 import Matches from "./pages/Matches.jsx";
 import Scores from "./pages/Scores.jsx";
 import Results from "./pages/Results.jsx";
+import Standings from "./pages/Standings.jsx";
+
 
 
 export default function App() {
@@ -20,6 +22,8 @@ export default function App() {
 		  <Route path="/matches" element={<Matches />} />
           <Route path="/scores" element={<Scores />} />
           <Route path="/results" element={<Results />} />
+		  <Route path="/standings" element={<Standings />} />
+
         </Routes>
       </div>
     </Router>

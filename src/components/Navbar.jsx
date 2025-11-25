@@ -11,6 +11,8 @@ export default function Navbar() {
 		<Link to="/matches">Matches</Link>
         <Link to="/scores">Scores</Link>
         <Link to="/results">Results</Link>
+		<Link to="/standings">Standings</Link>
+
       </div>
     </nav>
   );
