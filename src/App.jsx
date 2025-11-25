@@ -3,8 +3,10 @@ import Navbar from "./components/Navbar.jsx";
 
 import Home from "./pages/Home.jsx";
 import NewTournament from "./pages/NewTournament.jsx";
+import Matches from "./pages/Matches.jsx";
 import Scores from "./pages/Scores.jsx";
 import Results from "./pages/Results.jsx";
+
 
 export default function App() {
   return (
@@ -15,6 +17,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/new" element={<NewTournament />} />
+		  <Route path="/matches" element={<Matches />} />
           <Route path="/scores" element={<Scores />} />
           <Route path="/results" element={<Results />} />
         </Routes>

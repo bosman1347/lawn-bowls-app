@@ -8,6 +8,7 @@ export default function Navbar() {
       <div className="nav-links">
         <Link to="/">Home</Link>
         <Link to="/new">New Tournament</Link>
+		<Link to="/matches">Matches</Link>
         <Link to="/scores">Scores</Link>
         <Link to="/results">Results</Link>
       </div>
