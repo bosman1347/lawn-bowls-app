@@ -48,8 +48,53 @@ export default function NewTournament() {
 
     localStorage.setItem("tournament", JSON.stringify(tournament));
 
-    alert("Tournament saved! (Matches generated in next phase)");
-  };
+    // Generate matches (Phase 3 - Round Robin)
+	const matchRounds = generateRoundRobin(trimmed);
+
+	// Save matches
+	localStorage.setItem("matches", JSON.stringify(matchRounds));
+
+	// Redirect to matches page
+	alert("Tournament saved! (Matches generated)");
+	window.location.href = "/matches";
+	};
+	
+	// Round Robin algorithm
+	function generateRoundRobin(teams) {
+	const n = teams.length;
+	const isOdd = n % 2 !== 0;
+
+	// For odd team count, add a "BYE"
+	const list = isOdd ? [...teams, "BYE"] : [...teams];
+	const total = list.length;
+
+	const rounds = total - 1;
+	const half = total / 2;
+
+	const result = [];
+
+	let rotating = list.slice(1);
+
+	for (let r = 0; r < rounds; r++) {
+		const round = [];
+		const left = [list[0], ...rotating.slice(0, half - 1)];
+		const right = rotating.slice(half - 1).reverse();
+
+    for (let i = 0; i < half; i++) {
+		const teamA = left[i];
+		const teamB = right[i];
+		if (teamA !== "BYE" && teamB !== "BYE")
+        round.push({ teamA, teamB });
+    }
+
+    result.push(round);
+
+    // rotate except the first team
+    rotating.push(rotating.shift());
+  }
+
+  return result;
+}
 
   return (
     <div className="page">
