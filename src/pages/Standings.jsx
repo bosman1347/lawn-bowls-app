@@ -28,16 +28,14 @@ export default function Standings() {
       };
     });
 
-    // Process all results
+    // Compute all results
     results.forEach((round) => {
       if (!round) return;
-
       round.forEach((match) => {
         if (!match) return;
 
         const { teamA, teamB, scoreA, scoreB } = match;
 
-        // Update basic stats
         stats[teamA].played++;
         stats[teamB].played++;
 
@@ -46,7 +44,6 @@ export default function Standings() {
         stats[teamB].shotsFor += scoreB;
         stats[teamB].shotsAgainst += scoreA;
 
-        // Determine match outcome
         if (scoreA > scoreB) {
           stats[teamA].wins++;
           stats[teamB].losses++;
@@ -64,12 +61,11 @@ export default function Standings() {
       });
     });
 
-    // Compute shot difference
     Object.values(stats).forEach((t) => {
       t.shotDiff = t.shotsFor - t.shotsAgainst;
     });
 
-    // Sort table: points → shotDiff → shotsFor
+    // Sort by points → shot diff → shots for
     const sorted = Object.values(stats).sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
       if (b.shotDiff !== a.shotDiff) return b.shotDiff - a.shotDiff;
@@ -87,40 +83,37 @@ export default function Standings() {
     );
   }
 
+  const resetTournament = () => {
+    if (window.confirm("Are you sure you want to reset the tournament?")) {
+      localStorage.clear();
+      window.location.href = "/";
+    }
+  };
+
+  // Row background colours for top 3
+  const getRowStyle = (index) => {
+    if (index === 0) return { background: "#fffae6" }; // gold
+    if (index === 1) return { background: "#f0f0f0" }; // silver
+    if (index === 2) return { background: "#ffe6cc" }; // bronze
+    return {};
+  };
+
   return (
     <div className="page">
       <h2>Standings</h2>
 
-      <table border="1" cellPadding="6" style={{ borderCollapse: "collapse" }}>
+      <table
+        style={{
+          borderCollapse: "collapse",
+          width: "100%",
+          maxWidth: "800px",
+        }}
+      >
         <thead>
-          <tr>
+          <tr style={{ background: "#1C5D3A", color: "white" }}>
             <th>Team</th>
             <th>P</th>
             <th>W</th>
             <th>D</th>
             <th>L</th>
             <th>SF</th>
-            <th>SA</th>
-            <th>SD</th>
-            <th>Pts</th>
-          </tr>
-        </thead>
-        <tbody>
-          {table.map((t, i) => (
-            <tr key={i}>
-              <td>{t.team}</td>
-              <td>{t.played}</td>
-              <td>{t.wins}</td>
-              <td>{t.draws}</td>
-              <td>{t.losses}</td>
-              <td>{t.shotsFor}</td>
-              <td>{t.shotsAgainst}</td>
-              <td>{t.shotDiff}</td>
-              <td>{t.points}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
