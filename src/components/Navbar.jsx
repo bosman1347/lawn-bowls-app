@@ -6,6 +6,7 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="nav-title">Lawn Bowls App</div>
       <div className="nav-links">
+	    <Link to="/">Home</Link>
         <Link to="/">Home</Link>
         <Link to="/new">New Tournament</Link>
 		<Link to="/matches">Matches</Link>

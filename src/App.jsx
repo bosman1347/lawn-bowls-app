@@ -8,6 +8,8 @@ import Scores from "./pages/Scores.jsx";
 import Results from "./pages/Results.jsx";
 import Standings from "./pages/Standings.jsx";
 import Summary from "./pages/Summary.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
+
 
 
 export default function App() {
@@ -17,6 +19,7 @@ export default function App() {
 
       <div className="page-container">
         <Routes>
+		  <Route path="/" element={<Dashboard />} />
           <Route path="/" element={<Home />} />
           <Route path="/new" element={<NewTournament />} />
 		  <Route path="/matches" element={<Matches />} />
