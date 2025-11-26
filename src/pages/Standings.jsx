@@ -138,13 +138,45 @@ export default function Standings() {
           ))}
         </tbody>
       </table>
+ <button
+  onClick={() => {
+    const rows = [
+      ["Team", "P", "W", "D", "L", "SF", "SA", "SD", "Pts"],
+      ...table.map((t) => [
+        t.team,
+        t.played,
+        t.wins,
+        t.draws,
+        t.losses,
+        t.shotsFor,
+        t.shotsAgainst,
+        t.shotDiff,
+        t.points,
+      ]),
+    ];
 
+    const csvContent = rows.map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "standings.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }}
+  style={{ marginTop: "1.5rem", padding: "0.5rem 1rem" }}
+>
+  Export Standings to CSV
+</button>
       <button
         onClick={resetTournament}
         style={{ marginTop: "1.5rem", padding: "0.5rem 1rem" }}
       >
         Reset Tournament
       </button>
+	 
+
     </div>
   );
 }
