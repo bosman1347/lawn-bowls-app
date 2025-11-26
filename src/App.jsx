@@ -7,7 +7,7 @@ import Matches from "./pages/Matches.jsx";
 import Scores from "./pages/Scores.jsx";
 import Results from "./pages/Results.jsx";
 import Standings from "./pages/Standings.jsx";
-
+import Summary from "./pages/Summary.jsx";
 
 
 export default function App() {
@@ -23,6 +23,7 @@ export default function App() {
           <Route path="/scores" element={<Scores />} />
           <Route path="/results" element={<Results />} />
 		  <Route path="/standings" element={<Standings />} />
+		  <Route path="/summary" element={<Summary />} />
 
         </Routes>
       </div>
