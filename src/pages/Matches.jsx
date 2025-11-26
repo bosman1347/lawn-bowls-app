@@ -11,6 +11,8 @@ export default function Matches() {
     savedResults ? JSON.parse(savedResults) : []
   );
 
+  const [openRound, setOpenRound] = useState(null); // which round is expanded
+
   useEffect(() => {
     localStorage.setItem("results", JSON.stringify(results));
   }, [results]);
@@ -24,7 +26,7 @@ export default function Matches() {
     );
   }
 
-  // Determine match colour (win/loss/draw)
+  // Determine match win/loss/draw styling
   const getMatchStyle = (existing) => {
     if (!existing) return {};
     if (existing.scoreA > existing.scoreB)
@@ -34,7 +36,7 @@ export default function Matches() {
     return { background: "#fff6cc" }; // draw
   };
 
-  // Auto-save on typing
+  // Auto-save scores
   const handleTyping = (roundIndex, matchIndex, scoreA, scoreB) => {
     const updated = [...results];
     if (!updated[roundIndex]) updated[roundIndex] = [];
@@ -49,77 +51,115 @@ export default function Matches() {
     setResults(updated);
   };
 
+  // Is a round complete?
+  const isRoundComplete = (roundIndex) => {
+    const round = results[roundIndex];
+    if (!round) return false;
+    return round.every(
+      (m) =>
+        m &&
+        typeof m.scoreA === "number" &&
+        typeof m.scoreB === "number" &&
+        !isNaN(m.scoreA) &&
+        !isNaN(m.scoreB)
+    );
+  };
+
   return (
     <div className="page">
       <h2>Match Scoring</h2>
 
-      {matches.map((round, r) => (
-        <div key={r} style={{ marginBottom: "2rem" }}>
-          <h3
-            style={{
-              background: "#1C5D3A",
-              color: "white",
-              padding: "0.5rem",
-            }}
-          >
-            Round {r + 1}
-          </h3>
+      {matches.map((round, r) => {
+        const complete = isRoundComplete(r);
 
-          {round.map((m, i) => {
-            const existing = results[r]?.[i];
+        return (
+          <div key={r} style={{ marginBottom: "1.5rem" }}>
+            {/* Round header */}
+            <h3
+              onClick={() =>
+                setOpenRound((prev) => (prev === r ? null : r))
+              }
+              style={{
+                background: complete ? "#1C5D3A" : "#8a1f1f",
+                color: "white",
+                padding: "0.5rem",
+                cursor: "pointer",
+                userSelect: "none",
+              }}
+            >
+              Round {r + 1} &nbsp;
+              {complete ? "🟢 Complete" : "🔴 Incomplete"}
+              <span style={{ float: "right" }}>
+                {openRound === r ? "▾" : "▸"}
+              </span>
+            </h3>
 
-            return (
-              <div
-                key={i}
-                style={{
-                  marginBottom: "0.5rem",
-                  padding: "0.5rem",
-                  border: "1px solid #ccc",
-                  ...getMatchStyle(existing),
-                }}
-              >
-                <strong>
-                  {m.teamA} vs {m.teamB}
-                </strong>
+            {/* Collapsible content */}
+            {openRound === r && (
+              <div style={{ padding: "0.5rem 0" }}>
+                {round.map((m, i) => {
+                  const existing = results[r]?.[i];
 
-                <div style={{ marginTop: "0.5rem" }}>
-                  <input
-                    type="number"
-                    defaultValue={existing?.scoreA ?? ""}
-                    onInput={(e) =>
-                      handleTyping(
-                        r,
-                        i,
-                        e.target.value,
-                        document.getElementById(`scoreB-${r}-${i}`)?.value || 0
-                      )
-                    }
-                    id={`scoreA-${r}-${i}`}
-                    placeholder="Score A"
-                    style={{ width: "60px", marginRight: "1rem" }}
-                  />
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        marginBottom: "0.5rem",
+                        padding: "0.5rem",
+                        border: "1px solid #ccc",
+                        ...getMatchStyle(existing),
+                      }}
+                    >
+                      <strong>
+                        {m.teamA} vs {m.teamB}
+                      </strong>
 
-                  <input
-                    type="number"
-                    defaultValue={existing?.scoreB ?? ""}
-                    onInput={(e) =>
-                      handleTyping(
-                        r,
-                        i,
-                        document.getElementById(`scoreA-${r}-${i}`)?.value || 0,
-                        e.target.value
-                      )
-                    }
-                    id={`scoreB-${r}-${i}`}
-                    placeholder="Score B"
-                    style={{ width: "60px" }}
-                  />
-                </div>
+                      <div style={{ marginTop: "0.5rem" }}>
+                        <input
+                          type="number"
+                          defaultValue={existing?.scoreA ?? ""}
+                          onInput={(e) =>
+                            handleTyping(
+                              r,
+                              i,
+                              e.target.value,
+                              document.getElementById(
+                                `scoreB-${r}-${i}`
+                              )?.value || 0
+                            )
+                          }
+                          id={`scoreA-${r}-${i}`}
+                          style={{
+                            width: "60px",
+                            marginRight: "1rem",
+                          }}
+                        />
+
+                        <input
+                          type="number"
+                          defaultValue={existing?.scoreB ?? ""}
+                          onInput={(e) =>
+                            handleTyping(
+                              r,
+                              i,
+                              document.getElementById(
+                                `scoreA-${r}-${i}`
+                              )?.value || 0,
+                              e.target.value
+                            )
+                          }
+                          id={`scoreB-${r}-${i}`}
+                          style={{ width: "60px" }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
-      ))}
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
