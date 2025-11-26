@@ -51,6 +51,35 @@ export default function Dashboard() {
           <p>
             <strong>Progress:</strong> {progressPercent}%
           </p>
+		  
+		  <button
+  onClick={() => {
+    const tournament = localStorage.getItem("tournament");
+    const matches = localStorage.getItem("matches");
+    const results = localStorage.getItem("results");
+
+    const data = {
+      tournament: tournament ? JSON.parse(tournament) : null,
+      matches: matches ? JSON.parse(matches) : null,
+      results: results ? JSON.parse(results) : null,
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "tournament-backup.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }}
+  style={{ marginTop: "1rem" }}
+>
+  Export Tournament Data
+</button>
+
 
           {/* Quick Links */}
           <div style={{ marginTop: "1.5rem" }}>
@@ -75,3 +104,32 @@ export default function Dashboard() {
     </div>
   );
 }
+
+<button
+  onClick={() => {
+    const tournament = localStorage.getItem("tournament");
+    const matches = localStorage.getItem("matches");
+    const results = localStorage.getItem("results");
+
+    const data = {
+      tournament: tournament ? JSON.parse(tournament) : null,
+      matches: matches ? JSON.parse(matches) : null,
+      results: results ? JSON.parse(results) : null,
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "tournament-backup.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }}
+  style={{ marginTop: "1rem" }}
+>
+  Export Tournament Data
+</button>
+
