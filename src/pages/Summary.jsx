@@ -98,6 +98,41 @@ export default function Summary() {
               Round {m.round}: {m.teamA} {m.scoreA} - {m.scoreB} {m.teamB}
             </li>
           ))}
+		  <button
+  onClick={() => {
+    const rows = [
+      ["Round", "Team A", "Score A", "Score B", "Team B"],
+    ];
+
+    matches.forEach((round, rIdx) => {
+      round.forEach((match, mIdx) => {
+        const res = results[rIdx]?.[mIdx] ?? { scoreA: "", scoreB: "" };
+
+        rows.push([
+          rIdx + 1,
+          match.teamA,
+          res.scoreA,
+          res.scoreB,
+          match.teamB,
+        ]);
+      });
+    });
+
+    const csvContent = rows.map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "match-results.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }}
+  style={{ marginTop: "1.5rem", padding: "0.5rem 1rem" }}
+>
+  Export Match Results to CSV
+</button>
+
         </ul>
       )}
     </div>
