@@ -51,35 +51,61 @@ export default function Dashboard() {
           <p>
             <strong>Progress:</strong> {progressPercent}%
           </p>
-		  
-		  <button
-  onClick={() => {
-    const tournament = localStorage.getItem("tournament");
-    const matches = localStorage.getItem("matches");
-    const results = localStorage.getItem("results");
 
-    const data = {
-      tournament: tournament ? JSON.parse(tournament) : null,
-      matches: matches ? JSON.parse(matches) : null,
-      results: results ? JSON.parse(results) : null,
-    };
+          {/* EXPORT BUTTON */}
+          <button
+            onClick={() => {
+              const data = {
+                tournament,
+                matches,
+                results,
+              };
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json",
-    });
+              const blob = new Blob([JSON.stringify(data, null, 2)], {
+                type: "application/json",
+              });
 
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "tournament-backup.json";
-    a.click();
-    URL.revokeObjectURL(url);
-  }}
-  style={{ marginTop: "1rem" }}
->
-  Export Tournament Data
-</button>
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "tournament-backup.json";
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            style={{ marginTop: "1rem" }}
+          >
+            Export Tournament Data
+          </button>
 
+          {/* IMPORT BUTTON */}
+          <div style={{ marginTop: "1rem" }}>
+            <input
+              type="file"
+              accept="application/json"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                  try {
+                    const data = JSON.parse(ev.target.result);
+
+                    localStorage.setItem("tournament", JSON.stringify(data.tournament));
+                    localStorage.setItem("matches", JSON.stringify(data.matches));
+                    localStorage.setItem("results", JSON.stringify(data.results));
+
+                    alert("Tournament restored successfully!");
+                    window.location.reload();
+                  } catch (err) {
+                    alert("Invalid tournament file.");
+                  }
+                };
+
+                reader.readAsText(file);
+              }}
+            />
+          </div>
 
           {/* Quick Links */}
           <div style={{ marginTop: "1.5rem" }}>
@@ -104,32 +130,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-<button
-  onClick={() => {
-    const tournament = localStorage.getItem("tournament");
-    const matches = localStorage.getItem("matches");
-    const results = localStorage.getItem("results");
-
-    const data = {
-      tournament: tournament ? JSON.parse(tournament) : null,
-      matches: matches ? JSON.parse(matches) : null,
-      results: results ? JSON.parse(results) : null,
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json",
-    });
-
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "tournament-backup.json";
-    a.click();
-    URL.revokeObjectURL(url);
-  }}
-  style={{ marginTop: "1rem" }}
->
-  Export Tournament Data
-</button>
-
