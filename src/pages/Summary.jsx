@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { jsPDF } from "jspdf";
+
 
 export default function Summary() {
   const savedTournament = localStorage.getItem("tournament");
@@ -132,6 +134,53 @@ export default function Summary() {
 >
   Export Match Results to CSV
 </button>
+
+<button
+  onClick={() => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text("Match Results", 14, 20);
+
+    let y = 35;
+
+    matches.forEach((round, rIdx) => {
+      // Round Header
+      doc.setFontSize(14);
+      doc.text(`Round ${rIdx + 1}`, 14, y);
+      y += 8;
+
+      round.forEach((match, mIdx) => {
+        doc.setFontSize(12);
+
+        const res = results[rIdx]?.[mIdx];
+
+        const scoreA = res ? res.scoreA : "";
+        const scoreB = res ? res.scoreB : "";
+
+        doc.text(
+          `${match.teamA}   ${scoreA} - ${scoreB}   ${match.teamB}`,
+          14,
+          y
+        );
+        y += 7;
+
+        // New PDF page if needed
+        if (y > 280) {
+          doc.addPage();
+          y = 20;
+        }
+      });
+
+      y += 5; // spacing between rounds
+    });
+
+    doc.save("match-results.pdf");
+  }}
+  style={{ marginTop: "1.5rem", padding: "0.5rem 1rem" }}
+>
+  Export Match Results to PDF
+</button>
+
 
         </ul>
       )}
