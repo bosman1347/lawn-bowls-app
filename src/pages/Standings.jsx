@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import jsPDF from "jspdf";
 
 export default function Standings() {
   const savedTournament = localStorage.getItem("tournament");
@@ -169,6 +170,53 @@ export default function Standings() {
 >
   Export Standings to CSV
 </button>
+
+	  <button
+  onClick={() => {
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text("Tournament Standings", 14, 20);
+
+    doc.setFontSize(12);
+    doc.text(
+      "Team                 P   W   D   L   SF   SA   SD   Pts",
+      14,
+      35
+    );
+
+    let y = 45;
+
+    table.forEach((t) => {
+      const row = `${t.team.padEnd(18)} ${String(t.played).padStart(
+        2
+      )}   ${String(t.wins).padStart(2)}   ${String(t.draws).padStart(
+        2
+      )}   ${String(t.losses).padStart(2)}   ${String(t.shotsFor).padStart(
+        3
+      )}   ${String(t.shotsAgainst).padStart(
+        3
+      )}   ${String(t.shotDiff).padStart(3)}   ${String(t.points).padStart(
+        3
+      )}`;
+
+      doc.text(row, 14, y);
+      y += 8;
+
+      // Create a new page if needed
+      if (y > 280) {
+        doc.addPage();
+        y = 20;
+      }
+    });
+
+    doc.save("standings.pdf");
+  }}
+  style={{ marginTop: "1.5rem", padding: "0.5rem 1rem" }}
+>
+  Export Standings to PDF
+</button>
+
       <button
         onClick={resetTournament}
         style={{ marginTop: "1.5rem", padding: "0.5rem 1rem" }}
