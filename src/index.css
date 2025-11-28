@@ -113,3 +113,86 @@ table tr:nth-child(even) td {
 table tr:hover td {
   background: #eef7f0;
 }
+
+/* Match cards */
+.match-card {
+  background: #fdfdfd;
+  border: 1px solid #d7e2db;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.match-header {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+  color: #1C5D3A;
+}
+
+.match-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.match-team {
+  flex: 1;
+  font-weight: 500;
+}
+
+.match-score {
+  width: 60px;
+}
+
+.match-card.completed {
+  background: #eef7f0;
+  border-color: #9bc7a8;
+}
+
+.match-divider {
+  margin: 2rem 0 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1C5D3A;
+}
+.match-card {
+  background: #fdfdfd;
+  border: 1px solid #d7e2db;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.match-header {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+  color: #1C5D3A;
+}
+
+.match-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.match-team {
+  flex: 1;
+  font-weight: 500;
+}
+
+.match-score {
+  width: 60px;
+  padding: 0.3rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.match-card.completed {
+  background: #eef7f0;
+  border-color: #9bc7a8;
+}
+

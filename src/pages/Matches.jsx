@@ -102,56 +102,52 @@ export default function Matches() {
 
                   return (
                     <div
-                      key={i}
-                      style={{
-                        marginBottom: "0.5rem",
-                        padding: "0.5rem",
-                        border: "1px solid #ccc",
-                        ...getMatchStyle(existing),
-                      }}
-                    >
-                      <strong>
-                        {m.teamA} vs {m.teamB}
-                      </strong>
+						key={i}
+						className={`match-card ${existing ? "completed" : ""}`}
+				>
+					<div className="match-header">
+						{m.teamA} vs {m.teamB}
+					</div>
 
-                      <div style={{ marginTop: "0.5rem" }}>
-                        <input
-                          type="number"
-                          defaultValue={existing?.scoreA ?? ""}
-                          onInput={(e) =>
-                            handleTyping(
-                              r,
-                              i,
-                              e.target.value,
-                              document.getElementById(
-                                `scoreB-${r}-${i}`
-                              )?.value || 0
-                            )
-                          }
-                          id={`scoreA-${r}-${i}`}
-                          style={{
-                            width: "60px",
-                            marginRight: "1rem",
-                          }}
-                        />
+					<div className="match-row">
+						<div className="match-team">{m.teamA}</div>
 
-                        <input
-                          type="number"
-                          defaultValue={existing?.scoreB ?? ""}
-                          onInput={(e) =>
-                            handleTyping(
-                              r,
-                              i,
-                              document.getElementById(
-                                `scoreA-${r}-${i}`
-                              )?.value || 0,
-                              e.target.value
-                            )
-                          }
-                          id={`scoreB-${r}-${i}`}
-                          style={{ width: "60px" }}
-                        />
-                      </div>
+						<input
+							className="match-score"
+							type="number"
+							defaultValue={existing?.scoreA ?? ""}
+							onInput={(e) =>
+								handleTyping(
+									r,
+									i,
+									e.target.value,
+									document.getElementById(`scoreB-${r}-${i}`)?.value || 0
+								)
+							}
+							id={`scoreA-${r}-${i}`}
+						/>
+
+						<div style={{ fontWeight: 600 }}>vs</div>
+
+						<input
+							className="match-score"
+							type="number"
+							defaultValue={existing?.scoreB ?? ""}
+							onInput={(e) =>
+							handleTyping(
+								r,
+								i,
+							document.getElementById(`scoreA-${r}-${i}`)?.value || 0,
+							e.target.value
+						)
+					}
+					id={`scoreB-${r}-${i}`}
+				/>
+
+				<div className="match-team">{m.teamB}</div>
+			</div>
+		</div>
+
                     </div>
                   );
                 })}
