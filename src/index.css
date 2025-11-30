@@ -1,0 +1,438 @@
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #f3f5f6;
+  color: #222;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+.page-container {
+  padding: 1.5rem;
+}
+
+.page {
+  max-width: 1000px;
+  margin: 2rem auto;
+  padding: 2rem 2.5rem;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+a {
+  color: #1C5D3A;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: #134225;
+}
+
+
+/* Smooth fade-in animation when navigating pages */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+p, li {
+  line-height: 1.55;
+  margin-bottom: 0.75rem;
+}
+
+
+.page {
+  max-width: 1000px;
+  margin: 2rem auto;
+  padding: 2rem 2.5rem;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Smooth fade-in animation when navigating pages */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+h1, h2, h3 {
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 1.25rem;
+  color: #1C5D3A;
+  letter-spacing: 0.5px;
+}
+
+
+button {
+  background: #1C5D3A;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.3rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+}
+
+button:hover {
+  background: #184e32;
+}
+
+button:active {
+  transform: scale(0.97);
+  box-shadow: 0 0 0 2px #cfe9da;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #cfd8d1;
+  border-radius: 6px;
+  margin-right: 0.5rem;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus {
+  border-color: #1C5D3A;
+  box-shadow: 0 0 0 2px rgba(28, 93, 58, 0.25);
+  outline: none;
+}
+
+
+/* Modern table styling */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 1rem;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+  background: white;
+}
+
+table th {
+  background: #1C5D3A;
+  color: white;
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e6e6e6;
+  font-size: 0.95rem;
+}
+
+/* Zebra striping */
+table tr:nth-child(even) td {
+  background: #f9f9f9;
+}
+
+/* Optional row hover */
+table tr:hover td {
+  background: #eef7f0;
+}
+
+/* Match cards */
+.match-card {
+  background: #fdfdfd;
+  border: 1px solid #d7e2db;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.match-header {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+  color: #1C5D3A;
+}
+
+.match-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.match-team {
+  flex: 1;
+  font-weight: 500;
+}
+
+.match-score {
+  width: 60px;
+}
+
+.match-card.completed {
+  background: #eef7f0;
+  border-color: #9bc7a8;
+}
+
+.match-divider {
+  margin: 2rem 0 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1C5D3A;
+}
+.match-card {
+  background: #fdfdfd;
+  border: 1px solid #d7e2db;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.match-header {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+  color: #1C5D3A;
+}
+
+.match-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.match-team {
+  flex: 1;
+  font-weight: 500;
+}
+
+.match-score {
+  width: 60px;
+  padding: 0.3rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.match-card.completed {
+  background: #eef7f0;
+  border-color: #9bc7a8;
+}
+/* -------------------------------------------
+   Mobile responsiveness
+   ------------------------------------------- */
+
+@media (max-width: 700px) {
+  .page {
+    padding: 1rem 1.2rem;
+    margin-top: 1rem;
+  }
+
+  h1, h2, h3 {
+    font-size: 1.2rem;
+  }
+
+  button {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  table th,
+  table td {
+    padding: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  /* Match Card on mobile */
+  .match-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  .match-score {
+    width: 100%;
+  }
+
+  .match-team {
+    width: 100%;
+    text-align: left;
+  }
+
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+  }
+
+  .navbar-links a {
+    display: block;
+    margin: 0.3rem 0;
+  }
+}
+
+/* ---------------------------------------
+   Summary Page Styling
+   --------------------------------------- */
+
+.summary-section {
+  background: #ffffff;
+  padding: 1.5rem 2rem;
+  margin-bottom: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+
+.summary-title {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #1C5D3A;
+  margin-bottom: 1rem;
+  border-left: 5px solid #1C5D3A;
+  padding-left: 0.6rem;
+}
+
+.summary-match {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.7rem 0.3rem;
+  border-bottom: 1px solid #e6e6e6;
+  font-size: 1.05rem;
+}
+
+.summary-match:last-child {
+  border-bottom: none;
+}
+
+/* Completed match shading */
+.summary-completed {
+  background: #eef7f0;
+}
+
+.summary-team {
+  font-weight: 500;
+}
+
+/* Score layout */
+.summary-score {
+  font-weight: 600;
+  width: 80px;
+  text-align: center;
+}
+
+/* ---------------------------------------
+   Summary Page Styling
+   --------------------------------------- */
+
+.summary-card {
+  background: #ffffff;
+  padding: 1.5rem 2rem;
+  margin-bottom: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+
+.summary-title {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #1C5D3A;
+  margin-bottom: 1rem;
+  border-left: 4px solid #1C5D3A;
+  padding-left: 0.6rem;
+}
+
+.summary-match {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.7rem 0.4rem;
+  border-bottom: 1px solid #e6e6e6;
+  font-size: 1.05rem;
+}
+
+.summary-match:last-child {
+  border-bottom: none;
+}
+
+.summary-complete {
+  background: #eef7f0;
+}
+
+.summary-team {
+  font-weight: 500;
+}
+
+.summary-score {
+  font-weight: 600;
+  width: 80px;
+  text-align: center;
+}
+
+/* ---------------------------------------
+   New Tournament Form Styling
+   --------------------------------------- */
+
+.form-card {
+  background: #ffffff;
+  padding: 1.8rem 2.2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  max-width: 600px;
+  margin: 2rem auto;
+}
+
+.form-group {
+  margin-bottom: 1.4rem;
+}
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: #1C5D3A;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #ccd5ce;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.form-input:focus {
+  border-color: #1C5D3A;
+  box-shadow: 0 0 0 2px rgba(28, 93, 58, 0.25);
+  outline: none;
+}
+
+.form-button {
+  width: 100%;
+  padding: 0.8rem;
+  font-size: 1.1rem;
+  margin-top: 1rem;
+  border-radius: 8px;
+}
