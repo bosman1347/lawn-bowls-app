@@ -4,20 +4,7 @@ import {
 	loadTournaments,
 	saveTournaments,
 	setActiveTournament
-} from "../utils/storage;
-
-
-/*const all = loadTournaments();
-
-all[name] = {
-  tournament,
-  matches: matchRounds,
-  results: {},
-};
-
-saveTournaments(all);
-setActiveTournament(name);
-*/
+} from "../utils/storage";
 
 export default function NewTournament() {
   const [name, setName] = useState("");
