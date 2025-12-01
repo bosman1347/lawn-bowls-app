@@ -45,23 +45,47 @@ export default function Dashboard() {
   }
   
   //Prevent duplicate tournaments namespaces
-  const duplicateTournament = (name) => {
-    const all = loadTournaments();
-    const original = all[name];
+ const duplicateTournament = (name) => {
+  const all = loadTournaments();
+  const original = all[name];
 
-    if (!original) {
-      alert("Tournament not found");
-      return;
-    }
+  if (!original) {
+    alert("Tournament not found");
+    return;
+  }
 
-  // Generate a new unique name
+  // Generate a unique new name
   let newName = name + " (copy)";
   let counter = 2;
-
   while (all[newName]) {
     newName = name + " (copy " + counter + ")";
     counter++;
   }
+
+  // Create a clean duplicate with ONLY allowed fields
+  const copy = {
+    name: newName,
+    numTeams: original.numTeams,
+    teams: [...original.teams],
+    created: new Date().toISOString(),
+    matches: JSON.parse(JSON.stringify(original.matches)), // safe deep clone
+    results: {} // fresh results
+  };
+
+  // Save
+  all[newName] = copy;
+  saveTournaments(all);
+
+  // Set active
+  setActiveTournament(newName);
+  setActive(newName);
+
+  // Update list
+  setList(Object.keys(all));
+
+  alert(`Tournament duplicated as "${newName}"`);
+};
+
 
   // Deep clone the original tournament (so editing one does not affect the other)
   const copy = JSON.parse(JSON.stringify(original));
