@@ -436,3 +436,32 @@ table tr:hover td {
   margin-top: 1rem;
   border-radius: 8px;
 }
+
+.delete-button {
+  background: #c62828;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  margin-left: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.delete-button:hover {
+  background: #b71c1c;
+}
+
+.open-button {
+  background: #1976d2;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  margin-left: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.open-button:hover {
+  background: #1565c0;
+}
+
