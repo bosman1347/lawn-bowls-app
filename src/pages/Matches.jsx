@@ -1,135 +1,80 @@
 import { useState, useEffect } from "react";
-
 import {
   loadTournaments,
-  getActiveTournament,
   saveTournaments,
+  getActiveTournament
 } from "../utils/storage";
 
-const all = loadTournaments();
-const active = getActiveTournament();
-const data = all[active];
-
-const tournament = data?.tournament;
-const matches = data?.matches || [];
-const storedResults = data?.results || {};
-
-
-
 export default function Matches() {
-  const all = loadTournaments();
-  const active = getActiveTournament();
-  const data = all[active] || {};
+  const [tournament, setTournament] = useState(null);
+  const [matches, setMatches] = useState([]);
 
-  const savedTournament = data.tournament;
-  const storedMatches = data.matches || [];
-  const storedResults = data.results || [];
-
-
-  const [matches] = useState(storedMatches);
-  const [results, setResults] = useState(storedResults);
-  const [roundOpen, setRoundOpen] = useState(() =>
-    matches.map(() => true)
-  );
-
+  // Load the active tournament + matches when the page loads
   useEffect(() => {
-    data.results = results;
-    all[active] = data;
+    const name = getActiveTournament();
+    if (!name) return;
+
+    const all = loadTournaments();
+    const data = all[name];
+
+    if (data) {
+      setTournament(name);
+      setMatches(data.matches);
+    }
+  }, []);
+
+  // Save score updates to storage
+  const updateScore = (roundIndex, matchIndex, field, value) => {
+    const updatedMatches = [...matches];
+    updatedMatches[roundIndex][matchIndex][field] = value;
+
+    setMatches(updatedMatches);
+
+    // Save back to storage
+    const all = loadTournaments();
+    all[tournament].matches = updatedMatches;
     saveTournaments(all);
-
-  }, [results]);
-
-  const updateScore = (roundIdx, matchIdx, type, value) => {
-    const updated = [...results];
-    if (!updated[roundIdx]) updated[roundIdx] = [];
-    if (!updated[roundIdx][matchIdx]) updated[roundIdx][matchIdx] = {};
-
-    updated[roundIdx][matchIdx][`score${type}`] =
-      value === "" ? "" : Number(value);
-
-    setResults(updated);
   };
 
-  const toggleRound = (roundIdx) => {
-    const arr = [...roundOpen];
-    arr[roundIdx] = !arr[roundIdx];
-    setRoundOpen(arr);
-  };
-
-  if (!savedTournament) {
-    return (
-      <div className="page">
-        <h1>No active tournament</h1>
-        <p>Create a tournament first.</p>
-      </div>
-    );
+  if (!tournament) {
+    return <div className="page"><h2>No active tournament selected</h2></div>;
   }
 
   return (
     <div className="page">
-      <h1>Matches</h1>
+      <h2>Matches — {tournament}</h2>
 
-      {matches.map((round, r) => (
-        <div key={r} style={{ marginBottom: "2rem" }}>
-          <div
-            className="match-divider"
-            onClick={() => toggleRound(r)}
-            style={{ cursor: "pointer" }}
-          >
-            Round {r + 1} {roundOpen[r] ? "▾" : "▸"}
-          </div>
+      {matches.map((round, rIndex) => (
+        <div key={rIndex} className="round-block">
+          <h3>Round {rIndex + 1}</h3>
 
-          {roundOpen[r] &&
-            round.map((m, i) => {
-              const existing = results[r]?.[i];
+          {round.map((m, mIndex) => (
+            <div key={mIndex} className="match-block">
+              <div className="team-row">
+                <span>{m.team1}</span>
+                <input
+                  type="number"
+                  value={m.score1 ?? ""}
+                  onChange={(e) =>
+                    updateScore(rIndex, mIndex, "score1", Number(e.target.value))
+                  }
+                  className="score-input"
+                />
+              </div>
 
-              return (
-                <div
-                  key={i}
-                  className={`match-card ${existing ? "completed" : ""}`}
-                >
-                  <div className="match-header">
-                    {m.teamA} vs {m.teamB}
-                  </div>
-
-                  <div className="match-row">
-                    <div className="match-team">{m.teamA}</div>
-
-                    <input
-                      className="match-score"
-                      type="number"
-                      defaultValue={existing?.scoreA ?? ""}
-                      onInput={(e) =>
-                        updateScore(
-                          r,
-                          i,
-                          "A",
-                          e.target.value === "" ? "" : Number(e.target.value)
-                        )
-                      }
-                    />
-
-                    <div style={{ fontWeight: 600 }}>vs</div>
-
-                    <input
-                      className="match-score"
-                      type="number"
-                      defaultValue={existing?.scoreB ?? ""}
-                      onInput={(e) =>
-                        updateScore(
-                          r,
-                          i,
-                          "B",
-                          e.target.value === "" ? "" : Number(e.target.value)
-                        )
-                      }
-                    />
-
-                    <div className="match-team">{m.teamB}</div>
-                  </div>
-                </div>
-              );
-            })}
+              <div className="team-row">
+                <span>{m.team2}</span>
+                <input
+                  type="number"
+                  value={m.score2 ?? ""}
+                  onChange={(e) =>
+                    updateScore(rIndex, mIndex, "score2", Number(e.target.value))
+                  }
+                  className="score-input"
+                />
+              </div>
+            </div>
+          ))}
         </div>
       ))}
     </div>
