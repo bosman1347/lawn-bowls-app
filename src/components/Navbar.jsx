@@ -12,7 +12,10 @@ export default function Navbar() {
 
       <div className="navbar-links">
         <Link className={isActive("/") ? "active" : ""} to="/">Home</Link>
-        <Link to="/tournaments">Tournaments</Link>
+        <Link className={isActive("/dashboard") ? "active" : ""} to="/dashboard">
+			Tournaments
+		</Link>
+
 		<Link className={isActive("/matches") ? "active" : ""} to="/matches">Matches</Link>
         <Link className={isActive("/standings") ? "active" : ""} to="/standings">Standings</Link>
         <Link className={isActive("/summary") ? "active" : ""} to="/summary">Summary</Link>
