@@ -43,6 +43,45 @@ export default function Dashboard() {
     alert("A tournament with that name already exists.");
     return;
   }
+  
+  //Prevent duplicate tournaments namespaces
+  const duplicateTournament = (name) => {
+    const all = loadTournaments();
+    const original = all[name];
+
+    if (!original) {
+      alert("Tournament not found");
+      return;
+    }
+
+  // Generate a new unique name
+  let newName = name + " (copy)";
+  let counter = 2;
+
+  while (all[newName]) {
+    newName = name + " (copy " + counter + ")";
+    counter++;
+  }
+
+  // Deep clone the original tournament (so editing one does not affect the other)
+  const copy = JSON.parse(JSON.stringify(original));
+  copy.name = newName;
+  copy.created = new Date().toISOString();
+
+  // Save to storage
+  all[newName] = copy;
+  saveTournaments(all);
+
+  // Set duplicate as active
+  setActiveTournament(newName);
+  setActive(newName);
+
+  // Refresh dashboard list
+  setList(Object.keys(all));
+
+  alert(`Tournament duplicated as "${newName}"`);
+};
+
 
   // Copy old tournament to new name
   all[trimmed] = { ...all[oldName], name: trimmed };
@@ -122,8 +161,7 @@ export default function Dashboard() {
 				Rename
 			</button>
 
-
-              <button
+			 <button
                 onClick={() => deleteTournament(name)}
                 style={{ background: "#c62828", color: "white" }}
               >
