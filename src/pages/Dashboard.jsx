@@ -1,131 +1,113 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+import {
+  loadTournaments,
+  saveTournaments,
+  getActiveTournament,
+  setActiveTournament
+} from "../utils/storage";
+
 export default function Dashboard() {
-  const savedTournament = localStorage.getItem("tournament");
-  const savedMatches = localStorage.getItem("matches");
-  const savedResults = localStorage.getItem("results");
+  const [list, setList] = useState([]);
+  const [active, setActive] = useState(null);
 
-  const tournament = savedTournament ? JSON.parse(savedTournament) : null;
-  const matches = savedMatches ? JSON.parse(savedMatches) : [];
-  const results = savedResults ? JSON.parse(savedResults) : [];
-
-  const [progressPercent, setProgressPercent] = useState(0);
-
+  // Load tournament list on page load
   useEffect(() => {
-    if (!matches.length) return;
+    const all = loadTournaments();
+    setList(Object.keys(all));
+    setActive(getActiveTournament());
+  }, []);
 
-    let total = 0;
-    let done = 0;
+  // Open a tournament
+  const openTournament = (name) => {
+    setActiveTournament(name);
+    setActive(name);
+    alert(`Tournament "${name}" opened.`);
+  };
 
-    matches.forEach((round, rIdx) =>
-      round.forEach((match, mIdx) => {
-        total++;
-        const res = results[rIdx]?.[mIdx];
-        if (res && !isNaN(res.scoreA) && !isNaN(res.scoreB)) {
-          done++;
-        }
-      })
-    );
+  // Delete a tournament
+  const deleteTournament = (name) => {
+    if (!window.confirm(`Delete tournament "${name}" permanently?`)) return;
 
-    setProgressPercent(Math.round((done / total) * 100));
-  }, [matches, results]);
+    const all = loadTournaments();
+    delete all[name];
+    saveTournaments(all);
+
+    if (active === name) {
+      setActiveTournament(null);
+      setActive(null);
+    }
+
+    setList(Object.keys(all));
+  };
 
   return (
     <div className="page">
-      <h1>Lawn Bowls Tournament</h1>
+      <h1>Lawn Bowls Tournament Dashboard</h1>
 
-      {!tournament ? (
+      <Link to="/new">
+        <button style={{ marginBottom: "1rem" }}>Create New Tournament</button>
+      </Link>
+
+      <h2>Saved Tournaments</h2>
+
+      {list.length === 0 ? (
+        <p>No tournaments created yet.</p>
+      ) : (
         <div>
-          <h3>No active tournament</h3>
-          <Link to="/new">
-            <button>Create New Tournament</button>
+          {list.map((name) => (
+            <div
+              key={name}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                marginBottom: "8px"
+              }}
+            >
+              <span
+                style={{
+                  fontWeight: active === name ? "bold" : "normal",
+                  marginRight: "10px"
+                }}
+              >
+                {name}
+              </span>
+
+              <button
+                onClick={() => openTournament(name)}
+                style={{ marginRight: "10px" }}
+              >
+                Open
+              </button>
+
+              <button
+                onClick={() => deleteTournament(name)}
+                style={{ background: "#c62828", color: "white" }}
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {active && (
+        <div style={{ marginTop: "2rem" }}>
+          <h3>Active Tournament: {active}</h3>
+
+          <Link to="/matches">
+            <button style={{ marginRight: "1rem" }}>Matches</button>
+          </Link>
+
+          <Link to="/standings">
+            <button style={{ marginRight: "1rem" }}>Standings</button>
+          </Link>
+
+          <Link to="/summary">
+            <button style={{ marginRight: "1rem" }}>Summary</button>
           </Link>
         </div>
-      ) : (
-        <>
-          <h3>Current Tournament</h3>
-          <p>
-            <strong>Teams:</strong> {tournament.teams.length}
-          </p>
-          <p>
-            <strong>Progress:</strong> {progressPercent}%
-          </p>
-
-          {/* EXPORT BUTTON */}
-          <button
-            onClick={() => {
-              const data = {
-                tournament,
-                matches,
-                results,
-              };
-
-              const blob = new Blob([JSON.stringify(data, null, 2)], {
-                type: "application/json",
-              });
-
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = "tournament-backup.json";
-              a.click();
-              URL.revokeObjectURL(url);
-            }}
-            style={{ marginTop: "1rem" }}
-          >
-            Export Tournament Data
-          </button>
-
-          {/* IMPORT BUTTON */}
-          <div style={{ marginTop: "1rem" }}>
-            <input
-              type="file"
-              accept="application/json"
-              onChange={(e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                  try {
-                    const data = JSON.parse(ev.target.result);
-
-                    localStorage.setItem("tournament", JSON.stringify(data.tournament));
-                    localStorage.setItem("matches", JSON.stringify(data.matches));
-                    localStorage.setItem("results", JSON.stringify(data.results));
-
-                    alert("Tournament restored successfully!");
-                    window.location.reload();
-                  } catch (err) {
-                    alert("Invalid tournament file.");
-                  }
-                };
-
-                reader.readAsText(file);
-              }}
-            />
-          </div>
-
-          {/* Quick Links */}
-          <div style={{ marginTop: "1.5rem" }}>
-            <Link to="/matches">
-              <button style={{ marginRight: "1rem" }}>Matches</button>
-            </Link>
-
-            <Link to="/standings">
-              <button style={{ marginRight: "1rem" }}>Standings</button>
-            </Link>
-
-            <Link to="/summary">
-              <button style={{ marginRight: "1rem" }}>Summary</button>
-            </Link>
-
-            <Link to="/new">
-              <button>Create New Tournament</button>
-            </Link>
-          </div>
-        </>
       )}
     </div>
   );
