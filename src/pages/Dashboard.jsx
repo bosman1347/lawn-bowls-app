@@ -25,6 +25,40 @@ export default function Dashboard() {
     setActive(name);
     alert(`Tournament "${name}" opened.`);
   };
+  
+  // Rename tournament
+  const renameTournament = (oldName) => {
+  const newName = window.prompt("Enter a new name:", oldName);
+  if (!newName) return;
+
+  const trimmed = newName.trim();
+  if (trimmed === "") {
+    alert("Name cannot be empty.");
+    return;
+  }
+
+  const all = loadTournaments();
+
+  if (all[trimmed] && trimmed !== oldName) {
+    alert("A tournament with that name already exists.");
+    return;
+  }
+
+  // Copy old tournament to new name
+  all[trimmed] = { ...all[oldName], name: trimmed };
+  delete all[oldName];
+
+  saveTournaments(all);
+
+  // Update active tournament if needed
+  if (getActiveTournament() === oldName) {
+    setActiveTournament(trimmed);
+    setActive(trimmed);
+  }
+
+  setList(Object.keys(all));
+};
+
 
   // Delete a tournament
   const deleteTournament = (name) => {
@@ -80,6 +114,14 @@ export default function Dashboard() {
               >
                 Open
               </button>
+			  
+			  <button
+				onClick={() => renameTournament(name)}
+				style={{ marginRight: "10px" }}
+			>
+				Rename
+			</button>
+
 
               <button
                 onClick={() => deleteTournament(name)}
