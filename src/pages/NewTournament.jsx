@@ -1,9 +1,9 @@
 import { useState } from "react";
 
 import {
-	loadTournaments,
-	saveTournaments,
-	setActiveTournament
+  loadTournaments,
+  saveTournaments,
+  setActiveTournament
 } from "../utils/storage";
 
 export default function NewTournament() {
@@ -31,7 +31,6 @@ export default function NewTournament() {
     setTeams(updated);
   };
 
-
   // CREATE & SAVE TOURNAMENT
   const createTournament = () => {
     const trimmed = teams.map((t) => t.trim());
@@ -45,33 +44,42 @@ export default function NewTournament() {
       alert("All team names must be filled in.");
       return;
     }
+
     const duplicates = trimmed.filter((t, i) => trimmed.indexOf(t) !== i);
     if (duplicates.length > 0) {
       alert("Duplicate team names detected.");
       return;
     }
 
-    const tournament = {
+    // Generate matches
+    const matchRounds = generateRoundRobin(trimmed);
+
+    // Load existing tournaments
+    const all = loadTournaments();
+
+    // Add new tournament
+    all[name] = {
       name,
       numTeams,
       teams: trimmed,
       created: new Date().toISOString(),
+      matches: matchRounds,
+      results: {}
     };
-	
-	saveTournaments(all);
+
+    // Save database
+    saveTournaments(all);
+
+    // Set active tournament
     setActiveTournament(name);
 
-       // Generate matches
-    const matchRounds = generateRoundRobin(trimmed);
-    localStorage.setItem("matches", JSON.stringify(matchRounds));
-
     alert("Tournament created successfully!");
+
     window.location.href = "/matches";
   };
 
-
   //-------------------------------------------------------
-  // Round Robin generator - fully working
+  // Round Robin generator
   //-------------------------------------------------------
   function generateRoundRobin(teams) {
     const n = teams.length;
@@ -92,10 +100,16 @@ export default function NewTournament() {
       const right = rotating.slice(half - 1).reverse();
 
       for (let i = 0; i < half; i++) {
-        const teamA = left[i];
-        const teamB = right[i];
-        if (teamA !== "BYE" && teamB !== "BYE") {
-          round.push({ teamA, teamB });
+        const team1 = left[i];
+        const team2 = right[i];
+
+        if (team1 !== "BYE" && team2 !== "BYE") {
+          round.push({
+            team1,
+            team2,
+            score1: null,
+            score2: null
+          });
         }
       }
 
@@ -107,7 +121,6 @@ export default function NewTournament() {
     return result;
   }
 
-
   //-------------------------------------------------------
   // RENDER UI
   //-------------------------------------------------------
@@ -116,7 +129,7 @@ export default function NewTournament() {
       <h1>Create New Tournament</h1>
 
       <div className="form-card">
-        
+
         {/* Tournament Name */}
         <div className="form-group">
           <label className="form-label">Tournament Name</label>
@@ -141,7 +154,7 @@ export default function NewTournament() {
           />
         </div>
 
-        {/* Team Names */}
+        {/* Team Inputs */}
         <div className="form-group">
           <label className="form-label">Team Names</label>
           {teams.map((team, i) => (
@@ -166,5 +179,3 @@ export default function NewTournament() {
     </div>
   );
 }
-
-
