@@ -23,105 +23,77 @@ export default function Dashboard() {
   const openTournament = (name) => {
     setActiveTournament(name);
     setActive(name);
-    alert(`Tournament "${name}" opened.`);
   };
-  
-  // Rename tournament
+
+  // Rename a tournament
   const renameTournament = (oldName) => {
-  const newName = window.prompt("Enter a new name:", oldName);
-  if (!newName) return;
+    const newName = window.prompt("Enter a new name:", oldName);
+    if (!newName) return;
 
-  const trimmed = newName.trim();
-  if (trimmed === "") {
-    alert("Name cannot be empty.");
-    return;
-  }
+    const trimmed = newName.trim();
+    if (trimmed === "") {
+      alert("Name cannot be empty.");
+      return;
+    }
 
-  const all = loadTournaments();
+    const all = loadTournaments();
 
-  if (all[trimmed] && trimmed !== oldName) {
-    alert("A tournament with that name already exists.");
-    return;
-  }
-  
-  //Prevent duplicate tournaments namespaces
- const duplicateTournament = (name) => {
-  const all = loadTournaments();
-  const original = all[name];
+    if (all[trimmed] && trimmed !== oldName) {
+      alert("A tournament with that name already exists.");
+      return;
+    }
 
-  if (!original) {
-    alert("Tournament not found");
-    return;
-  }
+    // Copy old tournament data
+    all[trimmed] = { ...all[oldName], name: trimmed };
+    delete all[oldName];
 
-  // Generate a unique new name
-  let newName = name + " (copy)";
-  let counter = 2;
-  while (all[newName]) {
-    newName = name + " (copy " + counter + ")";
-    counter++;
-  }
+    saveTournaments(all);
 
-  // Create a clean duplicate with ONLY allowed fields
-  const copy = {
-    name: newName,
-    numTeams: original.numTeams,
-    teams: [...original.teams],
-    created: new Date().toISOString(),
-    matches: JSON.parse(JSON.stringify(original.matches)), // safe deep clone
-    results: {} // fresh results
+    // Update active tournament if needed
+    if (getActiveTournament() === oldName) {
+      setActiveTournament(trimmed);
+      setActive(trimmed);
+    }
+
+    setList(Object.keys(all));
   };
 
-  // Save
-  all[newName] = copy;
-  saveTournaments(all);
+  // Duplicate a tournament
+  const duplicateTournament = (name) => {
+    const all = loadTournaments();
+    const original = all[name];
 
-  // Set active
-  setActiveTournament(newName);
-  setActive(newName);
+    if (!original) {
+      alert("Tournament not found");
+      return;
+    }
 
-  // Update list
-  setList(Object.keys(all));
+    // Generate unique name
+    let newName = name + " (copy)";
+    let counter = 2;
+    while (all[newName]) {
+      newName = name + " (copy " + counter + ")";
+      counter++;
+    }
 
-  alert(`Tournament duplicated as "${newName}"`);
-};
+    // Safe cloned tournament
+    const copy = {
+      name: newName,
+      numTeams: original.numTeams,
+      teams: [...original.teams],
+      created: new Date().toISOString(),
+      matches: JSON.parse(JSON.stringify(original.matches)),
+      results: {}
+    };
 
+    all[newName] = copy;
+    saveTournaments(all);
 
-  // Deep clone the original tournament (so editing one does not affect the other)
-  const copy = JSON.parse(JSON.stringify(original));
-  copy.name = newName;
-  copy.created = new Date().toISOString();
+    setActiveTournament(newName);
+    setActive(newName);
 
-  // Save to storage
-  all[newName] = copy;
-  saveTournaments(all);
-
-  // Set duplicate as active
-  setActiveTournament(newName);
-  setActive(newName);
-
-  // Refresh dashboard list
-  setList(Object.keys(all));
-
-  alert(`Tournament duplicated as "${newName}"`);
-};
-
-
-  // Copy old tournament to new name
-  all[trimmed] = { ...all[oldName], name: trimmed };
-  delete all[oldName];
-
-  saveTournaments(all);
-
-  // Update active tournament if needed
-  if (getActiveTournament() === oldName) {
-    setActiveTournament(trimmed);
-    setActive(trimmed);
-  }
-
-  setList(Object.keys(all));
-};
-
+    setList(Object.keys(all));
+  };
 
   // Delete a tournament
   const deleteTournament = (name) => {
@@ -171,21 +143,19 @@ export default function Dashboard() {
                 {name}
               </span>
 
-              <button
-                onClick={() => openTournament(name)}
-                style={{ marginRight: "10px" }}
-              >
+              <button onClick={() => openTournament(name)} style={{ marginRight: "10px" }}>
                 Open
               </button>
-			  
-			  <button
-				onClick={() => renameTournament(name)}
-				style={{ marginRight: "10px" }}
-			>
-				Rename
-			</button>
 
-			 <button
+              <button onClick={() => renameTournament(name)} style={{ marginRight: "10px" }}>
+                Rename
+              </button>
+
+              <button onClick={() => duplicateTournament(name)} style={{ marginRight: "10px" }}>
+                Duplicate
+              </button>
+
+              <button
                 onClick={() => deleteTournament(name)}
                 style={{ background: "#c62828", color: "white" }}
               >
