@@ -1,239 +1,108 @@
-import { useEffect, useState } from "react";
-import jsPDF from "jspdf";
-
+import { useState, useEffect } from "react";
 import {
   loadTournaments,
   getActiveTournament
 } from "../utils/storage";
 
-
 export default function Standings() {
- const all = loadTournaments();
-const active = getActiveTournament();
-const data = all[active] || {};
-
-const tournament = data.tournament || null;
-const matches = data.matches || [];
-const results = data.results || [];
-
-
-  const [table, setTable] = useState([]);
+  const [tournamentName, setTournamentName] = useState("");
+  const [standings, setStandings] = useState([]);
 
   useEffect(() => {
-    if (!tournament) return;
+    const name = getActiveTournament();
+    if (!name) return;
 
-    // Initialize team stats
-    const stats = {};
-    tournament.teams.forEach((team) => {
-      stats[team] = {
-        team,
-        played: 0,
-        wins: 0,
-        draws: 0,
-        losses: 0,
-        shotsFor: 0,
-        shotsAgainst: 0,
-        shotDiff: 0,
-        points: 0,
-      };
-    });
+    const all = loadTournaments();
+    const data = all[name];
 
-    // Compute all results
-    results.forEach((round) => {
-      if (!round) return;
-      round.forEach((match) => {
-        if (!match) return;
+    if (data) {
+      setTournamentName(name);
 
-        const { teamA, teamB, scoreA, scoreB } = match;
+      const computed = computeStandings(data.matches);
+      setStandings(computed);
+    }
+  }, []);
 
-        stats[teamA].played++;
-        stats[teamB].played++;
+  // Compute standings matrix from matches
+  function computeStandings(matchRounds) {
+    const table = {};
 
-        stats[teamA].shotsFor += scoreA;
-        stats[teamA].shotsAgainst += scoreB;
-        stats[teamB].shotsFor += scoreB;
-        stats[teamB].shotsAgainst += scoreA;
+    matchRounds.forEach((round) => {
+      round.forEach((m) => {
+        if (!table[m.team1]) {
+          table[m.team1] = { team: m.team1, played: 0, won: 0, drawn: 0, lost: 0, points: 0, diff: 0 };
+        }
+        if (!table[m.team2]) {
+          table[m.team2] = { team: m.team2, played: 0, won: 0, drawn: 0, lost: 0, points: 0, diff: 0 };
+        }
 
-        if (scoreA > scoreB) {
-          stats[teamA].wins++;
-          stats[teamB].losses++;
-          stats[teamA].points += 2;
-        } else if (scoreB > scoreA) {
-          stats[teamB].wins++;
-          stats[teamA].losses++;
-          stats[teamB].points += 2;
+        const t1 = table[m.team1];
+        const t2 = table[m.team2];
+
+        if (m.score1 == null || m.score2 == null) return;
+
+        t1.played++;
+        t2.played++;
+
+        const s1 = m.score1;
+        const s2 = m.score2;
+
+        t1.diff += s1 - s2;
+        t2.diff += s2 - s1;
+
+        if (s1 > s2) {
+          t1.won++; t1.points += 2;
+          t2.lost++;
+        } else if (s2 > s1) {
+          t2.won++; t2.points += 2;
+          t1.lost++;
         } else {
-          stats[teamA].draws++;
-          stats[teamB].draws++;
-          stats[teamA].points += 1;
-          stats[teamB].points += 1;
+          t1.drawn++; t2.drawn++;
+          t1.points++; t2.points++;
         }
       });
     });
 
-    Object.values(stats).forEach((t) => {
-      t.shotDiff = t.shotsFor - t.shotsAgainst;
-    });
-
-    // Sort by points → shot diff → shots for
-    const sorted = Object.values(stats).sort((a, b) => {
-      if (b.points !== a.points) return b.points - a.points;
-      if (b.shotDiff !== a.shotDiff) return b.shotDiff - a.shotDiff;
-      return b.shotsFor - a.shotsFor;
-    });
-
-    setTable(sorted);
-  }, [results, tournament]);
-
-  if (!tournament) {
-    return (
-      <div className="page">
-        <h2>No tournament found</h2>
-      </div>
+    return Object.values(table).sort((a, b) =>
+      b.points - a.points || b.diff - a.diff
     );
   }
 
-  const resetTournament = () => {
-    if (window.confirm("Are you sure you want to reset the tournament?")) {
-      localStorage.clear();
-      window.location.href = "/";
-    }
-  };
-
-  // Row background colours for top 3
-  const getRowStyle = (index) => {
-    if (index === 0) return { background: "#fffae6" }; // gold
-    if (index === 1) return { background: "#f0f0f0" }; // silver
-    if (index === 2) return { background: "#ffe6cc" }; // bronze
-    return {};
-  };
+  if (!tournamentName) {
+    return <div className="page"><h2>No active tournament</h2></div>;
+  }
 
   return (
     <div className="page">
-      <h2>Standings</h2>
+      <h2>Standings — {tournamentName}</h2>
 
-      <table
-        style={{
-          borderCollapse: "collapse",
-          width: "100%",
-          maxWidth: "800px",
-        }}
-      >
+      <table className="standings-table">
         <thead>
-          <tr style={{ background: "#1C5D3A", color: "white" }}>
+          <tr>
             <th>Team</th>
-            <th>P</th>
-            <th>W</th>
-            <th>D</th>
-            <th>L</th>
-            <th>SF</th>
-            <th>SA</th>
-            <th>SD</th>
-            <th>Pts</th>
+            <th>Played</th>
+            <th>Won</th>
+            <th>Draw</th>
+            <th>Lost</th>
+            <th>Points</th>
+            <th>Diff</th>
           </tr>
         </thead>
+
         <tbody>
-          {table.map((t, i) => (
-            <tr key={i} style={getRowStyle(i)}>
-              <td>{t.team}</td>
-              <td>{t.played}</td>
-              <td>{t.wins}</td>
-              <td>{t.draws}</td>
-              <td>{t.losses}</td>
-              <td>{t.shotsFor}</td>
-              <td>{t.shotsAgainst}</td>
-              <td>{t.shotDiff}</td>
-              <td>{t.points}</td>
+          {standings.map((row, i) => (
+            <tr key={i}>
+              <td>{row.team}</td>
+              <td>{row.played}</td>
+              <td>{row.won}</td>
+              <td>{row.drawn}</td>
+              <td>{row.lost}</td>
+              <td>{row.points}</td>
+              <td>{row.diff}</td>
             </tr>
           ))}
         </tbody>
       </table>
- <button
-  onClick={() => {
-    const rows = [
-      ["Team", "P", "W", "D", "L", "SF", "SA", "SD", "Pts"],
-      ...table.map((t) => [
-        t.team,
-        t.played,
-        t.wins,
-        t.draws,
-        t.losses,
-        t.shotsFor,
-        t.shotsAgainst,
-        t.shotDiff,
-        t.points,
-      ]),
-    ];
-
-    const csvContent = rows.map((r) => r.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv" });
-
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "standings.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  }}
-  style={{ marginTop: "1.5rem", padding: "0.5rem 1rem" }}
->
-  Export Standings to CSV
-</button>
-
-	  <button
-  onClick={() => {
-    const doc = new jsPDF();
-
-    doc.setFontSize(18);
-    doc.text("Tournament Standings", 14, 20);
-
-    doc.setFontSize(12);
-    doc.text(
-      "Team                 P   W   D   L   SF   SA   SD   Pts",
-      14,
-      35
-    );
-
-    let y = 45;
-
-    table.forEach((t) => {
-      const row = `${t.team.padEnd(18)} ${String(t.played).padStart(
-        2
-      )}   ${String(t.wins).padStart(2)}   ${String(t.draws).padStart(
-        2
-      )}   ${String(t.losses).padStart(2)}   ${String(t.shotsFor).padStart(
-        3
-      )}   ${String(t.shotsAgainst).padStart(
-        3
-      )}   ${String(t.shotDiff).padStart(3)}   ${String(t.points).padStart(
-        3
-      )}`;
-
-      doc.text(row, 14, y);
-      y += 8;
-
-      // Create a new page if needed
-      if (y > 280) {
-        doc.addPage();
-        y = 20;
-      }
-    });
-
-    doc.save("standings.pdf");
-  }}
-  style={{ marginTop: "1.5rem", padding: "0.5rem 1rem" }}
->
-  Export Standings to PDF
-</button>
-
-      <button
-        onClick={resetTournament}
-        style={{ marginTop: "1.5rem", padding: "0.5rem 1rem" }}
-      >
-        Reset Tournament
-      </button>
-	 
-
     </div>
   );
 }
