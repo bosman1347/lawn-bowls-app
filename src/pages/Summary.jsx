@@ -1,128 +1,49 @@
-import { useEffect, useState } from "react";
-
+import { useState, useEffect } from "react";
 import {
   loadTournaments,
   getActiveTournament
 } from "../utils/storage";
 
-
 export default function Summary() {
-  const all = loadTournaments();
-  const active = getActiveTournament();
-  const data = all[active] || {};
-
-  const tournament = data.tournament || null;
-  const matches = data.matches || [];
-  const results = data.results || [];
-
+  const [tournamentName, setTournamentName] = useState("");
+  const [matches, setMatches] = useState([]);
 
   useEffect(() => {
-    const comp = [];
-    const nxt = [];
+    const name = getActiveTournament();
+    if (!name) return;
 
-    matches.forEach((round, rIdx) => {
-      round.forEach((m, mIdx) => {
-        const res = results[rIdx]?.[mIdx];
-        if (res && res.scoreA !== "" && res.scoreB !== "") {
-          comp.push({ ...m, ...res, round: rIdx + 1 });
-        } else {
-          nxt.push({ ...m, round: rIdx + 1 });
-        }
-      });
-    });
+    const all = loadTournaments();
+    const data = all[name];
 
-    setCompletedMatches(comp);
-    setNextMatches(nxt);
-  }, [matches, results]);
+    if (data) {
+      setTournamentName(name);
+      setMatches(data.matches);
+    }
+  }, []);
 
-  if (!tournament) {
-    return (
-      <div className="page">
-        <h1>No active tournament</h1>
-      </div>
-    );
+  if (!tournamentName) {
+    return <div className="page"><h2>No active tournament</h2></div>;
   }
 
   return (
     <div className="page">
-      <h1>Summary</h1>
+      <h2>Summary — {tournamentName}</h2>
 
-      {/* NEXT MATCHES CARD */}
-      <div className="summary-card">
-        <div className="summary-title">Next Matches</div>
+      <p>This page gives a quick overview of all match scores entered so far.</p>
 
-        {nextMatches.length === 0 ? (
-          <p>All matches are complete!</p>
-        ) : (
-          nextMatches.map((m, i) => (
-            <div key={i} className="summary-match">
-              <div className="summary-team">{m.teamA}</div>
-              <div className="summary-score">vs</div>
-              <div className="summary-team">{m.teamB}</div>
-              <div style={{ opacity: 0.6 }}>Round {m.round}</div>
+      {matches.map((round, rIndex) => (
+        <div key={rIndex} className="round-block">
+          <h3>Round {rIndex + 1}</h3>
+
+          {round.map((m, mIndex) => (
+            <div key={mIndex} className="summary-match">
+              <strong>{m.team1}</strong> ({m.score1 ?? "-"})  
+              {" vs "}
+              <strong>{m.team2}</strong> ({m.score2 ?? "-"})
             </div>
-          ))
-        )}
-      </div>
-
-      {/* RECENTLY COMPLETED CARD */}
-      <div className="summary-card">
-        <div className="summary-title">Recently Completed Matches</div>
-
-        {completedMatches.length === 0 ? (
-          <p>No completed matches yet.</p>
-        ) : (
-          completedMatches.map((m, i) => (
-            <div key={i} className="summary-match summary-complete">
-              <div className="summary-team">{m.teamA}</div>
-
-              <div className="summary-score">
-                {m.scoreA} - {m.scoreB}
-              </div>
-
-              <div className="summary-team">{m.teamB}</div>
-
-              <div style={{ opacity: 0.6 }}>Round {m.round}</div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* BUTTONS AT THE BOTTOM */}
-      <button
-        onClick={() => {
-          const csvRows = [["Team A", "Score A", "Score B", "Team B", "Round"]];
-          completedMatches.forEach((m) => {
-            csvRows.push([
-              m.teamA,
-              m.scoreA,
-              m.scoreB,
-              m.teamB,
-              "Round " + m.round,
-            ]);
-          });
-
-          const csv = csvRows.map((row) => row.join(",")).join("\n");
-          const blob = new Blob([csv], { type: "text/csv" });
-          const url = URL.createObjectURL(blob);
-
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "completed_matches.csv";
-          a.click();
-        }}
-        style={{ marginRight: "1rem" }}
-      >
-        Export Completed Matches (CSV)
-      </button>
-
-      <button
-        onClick={() => {
-          window.print();
-        }}
-      >
-        Print Summary
-      </button>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
