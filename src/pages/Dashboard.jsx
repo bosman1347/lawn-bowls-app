@@ -111,78 +111,68 @@ export default function Dashboard() {
     setList(Object.keys(all));
   };
 
-  return (
-    <div className="page">
-      <h1>Lawn Bowls Tournament Dashboard</h1>
+ return (
+  <div className="page">
+    <h1 style={{ marginBottom: "2rem" }}>Tournament Dashboard</h1>
 
-      <Link to="/new">
-        <button style={{ marginBottom: "1rem" }}>Create New Tournament</button>
-      </Link>
+    <Link to="/new">
+      <button className="btn-primary">➕ Create New Tournament</button>
+    </Link>
 
-      <h2>Saved Tournaments</h2>
+    <h2 style={{ marginTop: "2rem" }}>Saved Tournaments</h2>
 
-      {list.length === 0 ? (
-        <p>No tournaments created yet.</p>
-      ) : (
-        <div>
-          {list.map((name) => (
-            <div
-              key={name}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: "8px"
-              }}
-            >
-              <span
-                style={{
-                  fontWeight: active === name ? "bold" : "normal",
-                  marginRight: "10px"
-                }}
-              >
-                {name}
-              </span>
+    {list.length === 0 ? (
+      <p>No tournaments created yet.</p>
+    ) : (
+      <div className="tournament-grid">
+        {list.map((name) => (
+          <div
+            key={name}
+            className={`tournament-card ${
+              active === name ? "active-card" : ""
+            }`}
+          >
+            <h3>{name}</h3>
 
-              <button onClick={() => openTournament(name)} style={{ marginRight: "10px" }}>
-                Open
-              </button>
-
-              <button onClick={() => renameTournament(name)} style={{ marginRight: "10px" }}>
-                Rename
-              </button>
-
-              <button onClick={() => duplicateTournament(name)} style={{ marginRight: "10px" }}>
+            <div className="card-buttons">
+              <button onClick={() => openTournament(name)}>Open</button>
+              <button onClick={() => renameTournament(name)}>Rename</button>
+              <button onClick={() => duplicateTournament(name)}>
                 Duplicate
               </button>
-
               <button
                 onClick={() => deleteTournament(name)}
-                style={{ background: "#c62828", color: "white" }}
+                className="btn-danger"
               >
                 Delete
               </button>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
+    )}
 
-      {active && (
-        <div style={{ marginTop: "2rem" }}>
-          <h3>Active Tournament: {active}</h3>
+    {active && (
+      <div style={{ marginTop: "3rem" }}>
+        <h3>Active Tournament: {active}</h3>
 
+        <div className="active-buttons">
           <Link to="/matches">
-            <button style={{ marginRight: "1rem" }}>Matches</button>
+            <button className="btn-primary">Matches</button>
           </Link>
 
           <Link to="/standings">
-            <button style={{ marginRight: "1rem" }}>Standings</button>
+            <button className="btn-primary">Standings</button>
           </Link>
 
           <Link to="/summary">
-            <button style={{ marginRight: "1rem" }}>Summary</button>
+            <button className="btn-primary">Summary</button>
           </Link>
         </div>
-      )}
-    </div>
-  );
-}
+      </div>
+    )}
+  </div>
+);
+
+
+     

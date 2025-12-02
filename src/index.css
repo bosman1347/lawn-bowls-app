@@ -465,3 +465,64 @@ table tr:hover td {
   background: #1565c0;
 }
 
+/* Dashboard grid */
+.tournament-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* Each tournament card */
+.tournament-card {
+  background: #f7f7f7;
+  padding: 1.2rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tournament-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+/* Highlight active tournament */
+.active-card {
+  border-left: 6px solid #0a63d8;
+}
+
+/* Buttons inside card */
+.card-buttons button {
+  margin-right: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* Primary app button */
+.btn-primary {
+  background-color: #0a63d8;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: #084aa8;
+}
+
+/* Danger button */
+.btn-danger {
+  background-color: #c62828 !important;
+  color: white !important;
+}
+
+.btn-danger:hover {
+  background-color: #a31616 !important;
+}
+
+/* Active tournament section buttons */
+.active-buttons button {
+  margin-right: 1rem;
+}
