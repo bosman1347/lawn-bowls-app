@@ -119,7 +119,7 @@ export default function Dashboard() {
       <button className="btn-primary">➕ Create New Tournament</button>
     </Link>
 
-    <h2 style={{ marginTop: "2rem" }}>Saved Tournaments</h2>
+    <h2>Saved Tournaments</h2>
 
     {list.length === 0 ? (
       <p>No tournaments created yet.</p>
@@ -170,7 +170,7 @@ export default function Dashboard() {
     )}
 
     {active && (
-      <div style={{ marginTop: "3rem" }}>
+      <div>
         <h3>Active Tournament: {active}</h3>
 
         <div className="active-buttons">

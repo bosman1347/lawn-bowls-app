@@ -815,6 +815,44 @@ button {
   }
 }
 
+/* UNIVERSAL PAGE LAYOUT — PHASE 10H */
+
+.page {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  line-height: 1.6;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.page h2 {
+  margin-bottom: 1rem;
+  font-size: 1.9rem;
+  color: #0a3d8d;
+}
+
+.page h3 {
+  margin-top: 1.2rem;
+  margin-bottom: 0.8rem;
+  font-size: 1.4rem;
+  color: #0a63d8;
+}
+
+@media (max-width: 600px) {
+  .page {
+    margin: 1.4rem auto;
+  }
+
+  .page h2 {
+    font-size: 1.6rem;
+  }
+
+  .page h3 {
+    font-size: 1.25rem;
+  }
+}
+
+
 
 
 
