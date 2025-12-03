@@ -104,9 +104,9 @@ export default function Standings() {
 						<td>{row.points}</td>
 						<td>{row.diff}</td>
 				</tr>
-			))}
-		</tbody>
-	</table>
-</div>
-);
+			   ))}
+			</tbody>
+		</table>
+	</div>
+  );
 }
