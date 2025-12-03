@@ -76,7 +76,7 @@ export default function Standings() {
     <div className="page">
       <h2>Standings — {tournamentName}</h2>
 
-      <table className="standings-table">
+     
         <table className="standings-table">
 			<thead>
 				<tr>
