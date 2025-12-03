@@ -675,5 +675,99 @@ table tr:hover td {
   margin: 0 5px;
 }
 
+/* GLOBAL BUTTON STYLES */
+
+button {
+  cursor: pointer;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+/* Primary button */
+.btn-primary {
+  background-color: #0a63d8;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #084aa8;
+  transform: translateY(-2px);
+}
+
+/* Secondary button */
+.btn-secondary {
+  background-color: #ededed;
+  color: #222;
+}
+
+.btn-secondary:hover {
+  background-color: #dcdcdc;
+  transform: translateY(-2px);
+}
+
+/* Danger button */
+.btn-danger {
+  background-color: #c62828;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #a31616;
+  transform: translateY(-2px);
+}
+
+/* Small button variant */
+.btn-small {
+  padding: 5px 10px;
+  font-size: 0.85rem;
+}
+
+/* Large button */
+.btn-large {
+  padding: 12px 18px;
+  font-size: 1.05rem;
+}
+
+/* Smooth fade-in on page load */
+.page {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Hover highlight for list rows */
+.tournament-row {
+  transition: background 0.2s, transform 0.2s;
+}
+
+.tournament-row:hover {
+  background: #f4f8ff;
+  transform: translateX(4px);
+}
+
+/* Card hover (Matches cards, Summary cards, Dashboard cards) */
+.match-card,
+.summary-round-card,
+.dashboard-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.match-card:hover,
+.summary-round-card:hover,
+.dashboard-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+
+
+
+
 
 

@@ -124,7 +124,7 @@ export default function Dashboard() {
     {list.length === 0 ? (
       <p>No tournaments created yet.</p>
     ) : (
-      <div className="tournament-grid">
+     <div className="tournament-row dashboard-card" key={name}>
         {list.map((name) => (
           <div
             key={name}
