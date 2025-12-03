@@ -81,29 +81,29 @@ export default function Matches() {
   );*/
   
    <div className={`match-card ${m.score1 !== null && m.score2 !== null ? "match-complete" : ""}`}>
-  <div className="match-teams">
-    <span className="team-name">{m.team1}</span>
-    <span className="vs">vs</span>
-    <span className="team-name">{m.team2}</span>
-  </div>
+		<div className="match-teams">
+			<span className="team-name">{m.team1}</span>
+			<span className="vs">vs</span>
+			<span className="team-name">{m.team2}</span>
+		</div>
 
-  <div className="match-scores">
-    <input
-      type="number"
-      min="0"
-      value={m.score1 ?? ""}
-      onChange={(e) => updateScore(rIndex, mIndex, "score1", e.target.value)}
-    />
-    <span className="dash">-</span>
-    <input
-      type="number"
-      min="0"
-      value={m.score2 ?? ""}
-      onChange={(e) => updateScore(rIndex, mIndex, "score2", e.target.value)}
-    />
-  </div>
-</div>
-);
+		<div className="match-scores">
+			<input
+				type="number"
+				min="0"
+				value={m.score1 ?? ""}
+				onChange={(e) => updateScore(rIndex, mIndex, "score1", e.target.value)}
+			/>
+			<span className="dash">-</span>
+				<input
+				type="number"
+				min="0"
+				value={m.score2 ?? ""}
+				onChange={(e) => updateScore(rIndex, mIndex, "score2", e.target.value)}
+			/>
+		</div>
+	</div>
+  );
 }
 
 
