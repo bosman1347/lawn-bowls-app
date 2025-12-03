@@ -583,3 +583,42 @@ table tr:hover td {
   margin: 0 10px;
   font-weight: bold;
 }
+
+/* Standings Table */
+
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.standings-table thead {
+  background: #0a63d8;
+  color: white;
+}
+
+.standings-table th,
+.standings-table td {
+  padding: 12px 14px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
+
+.standings-table tr:nth-child(even) {
+  background: #f7f7f7;
+}
+
+/* Highlight top teams */
+.first-place {
+  background: #e6f4ea !important;
+  font-weight: bold;
+}
+
+.second-place {
+  background: #f1f7ff !important;
+}
+

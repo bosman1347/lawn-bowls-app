@@ -77,32 +77,36 @@ export default function Standings() {
       <h2>Standings — {tournamentName}</h2>
 
       <table className="standings-table">
-        <thead>
-          <tr>
-            <th>Team</th>
-            <th>Played</th>
-            <th>Won</th>
-            <th>Draw</th>
-            <th>Lost</th>
-            <th>Points</th>
-            <th>Diff</th>
-          </tr>
-        </thead>
+        <table className="standings-table">
+			<thead>
+				<tr>
+					<th>Position</th>
+					<th>Team</th>
+					<th>Played</th>
+					<th>Won</th>
+					<th>Lost</th>
+					<th>Points</th>
+					<th>Shot Diff</th>
+				</tr>
+			</thead>
 
-        <tbody>
-          {standings.map((row, i) => (
-            <tr key={i}>
-              <td>{row.team}</td>
-              <td>{row.played}</td>
-              <td>{row.won}</td>
-              <td>{row.drawn}</td>
-              <td>{row.lost}</td>
-              <td>{row.points}</td>
-              <td>{row.diff}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+			<tbody>
+				{standings.map((row, index) => (
+				<tr
+					key={row.team}
+					className={index === 0 ? "first-place" : index === 1 ? "second-place" : ""}
+					>
+						<td>{index + 1}</td>
+						<td>{row.team}</td>
+						<td>{row.played}</td>
+						<td>{row.won}</td>
+						<td>{row.lost}</td>
+						<td>{row.points}</td>
+						<td>{row.diff}</td>
+				</tr>
+			))}
+		</tbody>
+	</table>
+</div>
+);
 }
