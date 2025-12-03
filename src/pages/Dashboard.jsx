@@ -135,17 +135,34 @@ export default function Dashboard() {
             <h3>{name}</h3>
 
             <div className="card-buttons">
-              <button onClick={() => openTournament(name)}>Open</button>
-              <button onClick={() => renameTournament(name)}>Rename</button>
-              <button onClick={() => duplicateTournament(name)}>
-                Duplicate
-              </button>
               <button
-                onClick={() => deleteTournament(name)}
-                className="btn-danger"
-              >
-                Delete
-              </button>
+				className="btn-secondary"
+					onClick={() => openTournament(name)}
+						>
+						Open
+			   </button>
+
+				<button
+					className="btn-secondary"
+						onClick={() => renameTournament(name)}
+							>
+							Rename
+			   </button>
+
+				<button
+					className="btn-secondary"
+						onClick={() => duplicateTournament(name)}
+						>
+						Duplicate
+			   </button>
+
+				<button
+					className="btn-danger"
+						onClick={() => deleteTournament(name)}
+						>
+						Delete
+			     </button>
+			
             </div>
           </div>
         ))}
