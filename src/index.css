@@ -765,6 +765,57 @@ button {
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
+/* NAVBAR POLISH */
+
+.navbar {
+  background: #0a63d8;
+  padding: 0.8rem 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.navbar-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 1rem;
+}
+
+.navbar-links a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
+}
+
+.navbar-links a:hover {
+  opacity: 0.75;
+}
+
+.navbar-active {
+  border-bottom: 2px solid white;
+}
+
+@media (max-width: 600px) {
+  .navbar {
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .navbar-links {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+
 
 
 

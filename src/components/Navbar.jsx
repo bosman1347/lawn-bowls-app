@@ -1,5 +1,4 @@
 import { Link, useLocation } from "react-router-dom";
-import "./Navbar.css";
 
 export default function Navbar() {
   const location = useLocation();
@@ -8,18 +7,47 @@ export default function Navbar() {
 
   return (
     <nav className="navbar">
-      <div className="navbar-title">Lawn Bowls App</div>
+      <div className="navbar-title">Lawn Bowls Tournament</div>
 
       <div className="navbar-links">
-        <Link className={isActive("/") ? "active" : ""} to="/">Home</Link>
-        <Link className={isActive("/dashboard") ? "active" : ""} to="/dashboard">
-			Tournaments
-		</Link>
+        <Link to="/" className={isActive("/") ? "navbar-active" : ""}>
+          Home
+        </Link>
 
-		<Link className={isActive("/matches") ? "active" : ""} to="/matches">Matches</Link>
-        <Link className={isActive("/standings") ? "active" : ""} to="/standings">Standings</Link>
-        <Link className={isActive("/summary") ? "active" : ""} to="/summary">Summary</Link>
-        <Link className={isActive("/new") ? "active" : ""} to="/new">New Tournament</Link>
+        <Link
+          to="/tournaments"
+          className={isActive("/tournaments") ? "navbar-active" : ""}
+        >
+          Tournaments
+        </Link>
+
+        <Link
+          to="/new"
+          className={isActive("/new") ? "navbar-active" : ""}
+        >
+          New Tournament
+        </Link>
+
+        <Link
+          to="/matches"
+          className={isActive("/matches") ? "navbar-active" : ""}
+        >
+          Matches
+        </Link>
+
+        <Link
+          to="/standings"
+          className={isActive("/standings") ? "navbar-active" : ""}
+        >
+          Standings
+        </Link>
+
+        <Link
+          to="/summary"
+          className={isActive("/summary") ? "navbar-active" : ""}
+        >
+          Summary
+        </Link>
       </div>
     </nav>
   );
