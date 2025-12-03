@@ -22,28 +22,52 @@ export default function Summary() {
   }, []);
 
   if (!tournamentName) {
-    return <div className="page"><h2>No active tournament</h2></div>;
+    return (
+      <div className="page">
+        <h2>No active tournament</h2>
+      </div>
+    );
   }
 
   return (
     <div className="page">
       <h2>Summary — {tournamentName}</h2>
 
-      <p>This page gives a quick overview of all match scores entered so far.</p>
+      <p style={{ marginBottom: "1.5rem" }}>
+        A quick overview of all match scores entered so far.
+      </p>
 
-      {matches.map((round, rIndex) => (
-        <div key={rIndex} className="round-block">
-          <h3>Round {rIndex + 1}</h3>
+      <div className="summary-container">
+        {matches.map((round, rIndex) => (
+          <div key={rIndex} className="summary-round-card">
+            <h3>Round {rIndex + 1}</h3>
 
-          {round.map((m, mIndex) => (
-            <div key={mIndex} className="summary-match">
-              <strong>{m.team1}</strong> ({m.score1 ?? "-"})  
-              {" vs "}
-              <strong>{m.team2}</strong> ({m.score2 ?? "-"})
-            </div>
-          ))}
-        </div>
-      ))}
+            {round.map((m, mIndex) => (
+              <div
+                key={mIndex}
+                className={`summary-match ${
+                  m.score1 !== null && m.score2 !== null
+                    ? "summary-complete"
+                    : ""
+                }`}
+              >
+                <div className="summary-team">
+                  <strong>{m.team1}</strong>
+                </div>
+
+                <div className="summary-score">
+                  {m.score1 ?? "-"} <span className="summary-vs">vs</span>{" "}
+                  {m.score2 ?? "-"}
+                </div>
+
+                <div className="summary-team">
+                  <strong>{m.team2}</strong>
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
