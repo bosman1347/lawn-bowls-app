@@ -23,15 +23,13 @@ export default function Summary() {
       setTournamentName(name);
       setMatches(data.matches);
 
-      // Recompute standings using the new system
+      // Recompute standings using unified logic
       const table = computeStandings(data.matches);
       setStandings(table);
     }
   }, []);
 
-  // ----------------------------------------------------
-  // NEW computeStandings: Same logic as Standings.jsx
-  // ----------------------------------------------------
+  // Unified computeStandings (same logic as Standings.jsx)
   function computeStandings(matchRounds) {
     const table = {};
 
@@ -67,40 +65,98 @@ export default function Summary() {
         const t1 = table[m.team1];
         const t2 = table[m.team2];
 
-        if (m.score1 == null || m.score2 == null) return;
+        if (m.score1 != null && m.score2 != null) {
+          const s1 = Number(m.score1);
+          const s2 = Number(m.score2);
 
-        const s1 = m.score1;
-        const s2 = m.score2;
+          t1.played++;
+          t2.played++;
 
-        // Played
-        t1.played++;
-        t2.played++;
+          t1.shotsFor += s1;
+          t1.shotsAgainst += s2;
+          t2.shotsFor += s2;
+          t2.shotsAgainst += s1;
 
-        // Shots
-        t1.shotsFor += s1;
-        t1.shotsAgainst += s2;
+          t1.diff = t1.shotsFor - t1.shotsAgainst;
+          t2.diff = t2.shotsFor - t2.shotsAgainst;
 
-        t2.shotsFor += s2;
-        t2.shotsAgainst += s1;
+          if (s1 > s2) {
+            t1.won++;
+            t1.points += 2;
+            t2.lost++;
+          } else if (s2 > s1) {
+            t2.won++;
+            t2.points += 2;
+            t1.lost++;
+          } else {
+            t1.drawn++;
+            t2.drawn++;
+            t1.points++;
+            t2.points++;
+          }
+        } else if (m.skins) {
+          const skins = m.skins;
+          let totalA = 0,
+            totalB = 0;
+          let skinPointsA = 0,
+            skinPointsB = 0;
 
-        // Shot diff
-        t1.diff = t1.shotsFor - t1.shotsAgainst;
-        t2.diff = t2.shotsFor - t2.shotsAgainst;
+          skins.forEach((s) => {
+            const a = s.a == null ? null : Number(s.a);
+            const b = s.b == null ? null : Number(s.b);
+            if (a != null) totalA += a;
+            if (b != null) totalB += b;
 
-        // Result
-        if (s1 > s2) {
-          t1.won++;
-          t1.points += 2;
-          t2.lost++;
-        } else if (s2 > s1) {
-          t2.won++;
-          t2.points += 2;
-          t1.lost++;
-        } else {
-          t1.drawn++;
-          t2.drawn++;
-          t1.points++;
-          t2.points++;
+            if (a != null && b != null) {
+              if (a > b) skinPointsA += 1;
+              else if (b > a) skinPointsB += 1;
+              else {
+                skinPointsA += 0.5;
+                skinPointsB += 0.5;
+              }
+            }
+          });
+
+          const anyCompleteSkin = skins.some((s) => s.a != null && s.b != null);
+          if (anyCompleteSkin) {
+            t1.played++;
+            t2.played++;
+          }
+
+          t1.shotsFor += totalA;
+          t1.shotsAgainst += totalB;
+          t2.shotsFor += totalB;
+          t2.shotsAgainst += totalA;
+
+          t1.diff = t1.shotsFor - t1.shotsAgainst;
+          t2.diff = t2.shotsFor - t2.shotsAgainst;
+
+          let bonusA = 0,
+            bonusB = 0;
+          if (skinPointsA > skinPointsB) bonusA = 2;
+          else if (skinPointsB > skinPointsA) bonusB = 2;
+          else {
+            bonusA = 1;
+            bonusB = 1;
+          }
+
+          const matchPointsA = skinPointsA + bonusA;
+          const matchPointsB = skinPointsB + bonusB;
+
+          if (matchPointsA > matchPointsB) {
+            t1.won++;
+            t1.points += matchPointsA;
+            t2.lost++;
+          } else if (matchPointsB > matchPointsA) {
+            t2.won++;
+            t2.points += matchPointsB;
+            t1.lost++;
+          } else {
+            t1.drawn++;
+            t2.drawn++;
+            t1.points += matchPointsA;
+            t2.points += matchPointsB;
+          }
         }
       });
     });
@@ -113,9 +169,7 @@ export default function Summary() {
     );
   }
 
-  // ----------------------------------------------------
-  // ZIP Export Button Handler
-  // ----------------------------------------------------
+  // Export
   async function exportBundle() {
     const zipBlob = await buildZIP(standings, matches);
 
@@ -158,7 +212,9 @@ export default function Summary() {
               <div
                 key={mIndex}
                 className={`summary-match ${
-                  m.score1 !== null && m.score2 !== null
+                  // mark complete if standard scores present OR all skins have values
+                  (m.score1 != null && m.score2 != null) ||
+                  (m.skins && m.skins.every((s) => s.a != null && s.b != null))
                     ? "summary-complete"
                     : ""
                 }`}
@@ -168,8 +224,18 @@ export default function Summary() {
                 </div>
 
                 <div className="summary-score">
-                  {m.score1 ?? "-"} <span className="summary-vs">vs</span>{" "}
-                  {m.score2 ?? "-"}
+                  {m.score1 != null && m.score2 != null ? (
+                    <>
+                      {m.score1} <span className="summary-vs">vs</span> {m.score2}
+                    </>
+                  ) : m.skins ? (
+                    <>
+                      S1:{m.skins[0].a ?? "-"} S2:{m.skins[1].a ?? "-"} S3:{m.skins[2].a ?? "-"} <br />
+                      Tot:{m.totalA ?? 0}
+                    </>
+                  ) : (
+                    <>-</>
+                  )}
                 </div>
 
                 <div className="summary-team">

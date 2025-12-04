@@ -10,10 +10,11 @@ export default function NewTournament() {
   const [name, setName] = useState("");
   const [numTeams, setNumTeams] = useState(4);
   const [teams, setTeams] = useState(["", "", "", ""]);
+  const [scoringMode, setScoringMode] = useState("standard"); // "standard" or "skins"
 
   // Update team count & resize list
   const handleNumTeamsChange = (e) => {
-    const value = parseInt(e.target.value, 10);
+    const value = parseInt(e.target.value, 10) || 2;
     setNumTeams(value);
 
     const updated = [...teams];
@@ -51,19 +52,52 @@ export default function NewTournament() {
       return;
     }
 
-    // Generate matches
+    // Generate matches: use round-robin generator (keeps same structure)
     const matchRounds = generateRoundRobin(trimmed);
 
     // Load existing tournaments
     const all = loadTournaments();
+
+    if (all[name]) {
+      alert("A tournament with that name already exists.");
+      return;
+    }
+
+    // Create minimal matches structure:
+    // For standard matches each match object will be { team1, team2, score1: null, score2: null }
+    // For skins mode, we'll store matches as { team1, team2, skins: [{a:null,b:null}, ...], totalA:0, totalB:0, skinPointsA:0, skinPointsB:0, bonusA:0, bonusB:0, matchPointsA:0, matchPointsB:0 }
+    const preparedRounds = matchRounds.map((round) =>
+      round.map((m) =>
+        scoringMode === "skins"
+          ? {
+              team1: m.team1,
+              team2: m.team2,
+              skins: [
+                { a: null, b: null },
+                { a: null, b: null },
+                { a: null, b: null }
+              ],
+              totalA: 0,
+              totalB: 0,
+              skinPointsA: 0,
+              skinPointsB: 0,
+              bonusA: 0,
+              bonusB: 0,
+              matchPointsA: 0,
+              matchPointsB: 0
+            }
+          : { team1: m.team1, team2: m.team2, score1: null, score2: null }
+      )
+    );
 
     // Add new tournament
     all[name] = {
       name,
       numTeams,
       teams: trimmed,
+      scoringMode,
       created: new Date().toISOString(),
-      matches: matchRounds,
+      matches: preparedRounds,
       results: {}
     };
 
@@ -79,7 +113,7 @@ export default function NewTournament() {
   };
 
   //-------------------------------------------------------
-  // Round Robin generator
+  // Round Robin generator (simple)
   //-------------------------------------------------------
   function generateRoundRobin(teams) {
     const n = teams.length;
@@ -106,9 +140,7 @@ export default function NewTournament() {
         if (team1 !== "BYE" && team2 !== "BYE") {
           round.push({
             team1,
-            team2,
-            score1: null,
-            score2: null
+            team2
           });
         }
       }
@@ -129,7 +161,6 @@ export default function NewTournament() {
       <h1>Create New Tournament</h1>
 
       <div className="form-card">
-
         {/* Tournament Name */}
         <div className="form-group">
           <label className="form-label">Tournament Name</label>
@@ -140,6 +171,19 @@ export default function NewTournament() {
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Summer Pairs 2025"
           />
+        </div>
+
+        {/* Scoring Mode */}
+        <div className="form-group">
+          <label className="form-label">Scoring Mode</label>
+          <select
+            className="form-input"
+            value={scoringMode}
+            onChange={(e) => setScoringMode(e.target.value)}
+          >
+            <option value="standard">Standard (2–1–0; optional bonus)</option>
+            <option value="skins">Skins / Sets (3 × 5 ends)</option>
+          </select>
         </div>
 
         {/* Number of Teams */}
@@ -171,10 +215,9 @@ export default function NewTournament() {
         </div>
 
         {/* Create button */}
-        <button className="form-button" onClick={createTournament}>
+        <button className="btn-primary" onClick={createTournament}>
           Create Tournament
         </button>
-
       </div>
     </div>
   );
