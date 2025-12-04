@@ -4,6 +4,25 @@ import {
   getActiveTournament
 } from "../utils/storage";
 
+import { buildZIP } from "../utils/exporter";
+
+async function exportBundle() {
+  const zipBlob = await buildZIP(standings, matches);
+
+  const url = URL.createObjectURL(zipBlob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${tournamentName}-export.zip`;
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+<button className="btn-primary" onClick={exportBundle}>
+  Export Tournament ZIP
+</button>
+
+
 export default function Summary() {
   const [tournamentName, setTournamentName] = useState("");
   const [matches, setMatches] = useState([]);
@@ -33,7 +52,7 @@ export default function Summary() {
     <div className="page">
       <h2>Summary — {tournamentName}</h2>
 
-      <p style={{ marginBottom: "1.5rem" }}>
+      <p>
         A quick overview of all match scores entered so far.
       </p>
 
