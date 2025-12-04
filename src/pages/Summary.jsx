@@ -23,23 +23,45 @@ export default function Summary() {
       setTournamentName(name);
       setMatches(data.matches);
 
-      // Recompute standings
+      // Recompute standings using the new system
       const table = computeStandings(data.matches);
       setStandings(table);
     }
   }, []);
 
-  // compute standings logic (same as in Standings.jsx)
+  // ----------------------------------------------------
+  // NEW computeStandings: Same logic as Standings.jsx
+  // ----------------------------------------------------
   function computeStandings(matchRounds) {
     const table = {};
 
     matchRounds.forEach((round) => {
       round.forEach((m) => {
         if (!table[m.team1]) {
-          table[m.team1] = { team: m.team1, played: 0, won: 0, drawn: 0, lost: 0, points: 0, diff: 0 };
+          table[m.team1] = {
+            team: m.team1,
+            played: 0,
+            won: 0,
+            drawn: 0,
+            lost: 0,
+            points: 0,
+            shotsFor: 0,
+            shotsAgainst: 0,
+            diff: 0
+          };
         }
         if (!table[m.team2]) {
-          table[m.team2] = { team: m.team2, played: 0, won: 0, drawn: 0, lost: 0, points: 0, diff: 0 };
+          table[m.team2] = {
+            team: m.team2,
+            played: 0,
+            won: 0,
+            drawn: 0,
+            lost: 0,
+            points: 0,
+            shotsFor: 0,
+            shotsAgainst: 0,
+            diff: 0
+          };
         }
 
         const t1 = table[m.team1];
@@ -47,35 +69,52 @@ export default function Summary() {
 
         if (m.score1 == null || m.score2 == null) return;
 
-        t1.played++;
-        t2.played++;
-
         const s1 = m.score1;
         const s2 = m.score2;
 
-        t1.diff += s1 - s2;
-        t2.diff += s2 - s1;
+        // Played
+        t1.played++;
+        t2.played++;
 
+        // Shots
+        t1.shotsFor += s1;
+        t1.shotsAgainst += s2;
+
+        t2.shotsFor += s2;
+        t2.shotsAgainst += s1;
+
+        // Shot diff
+        t1.diff = t1.shotsFor - t1.shotsAgainst;
+        t2.diff = t2.shotsFor - t2.shotsAgainst;
+
+        // Result
         if (s1 > s2) {
-          t1.won++; t1.points += 2;
+          t1.won++;
+          t1.points += 2;
           t2.lost++;
         } else if (s2 > s1) {
-          t2.won++; t2.points += 2;
+          t2.won++;
+          t2.points += 2;
           t1.lost++;
         } else {
-          t1.drawn++; t2.drawn++;
-          t1.points++; t2.points++;
+          t1.drawn++;
+          t2.drawn++;
+          t1.points++;
+          t2.points++;
         }
       });
     });
 
     return Object.values(table).sort((a, b) =>
-      b.points - a.points || b.diff - a.diff
+      b.points - a.points ||
+      b.diff - a.diff ||
+      b.shotsFor - a.shotsFor ||
+      a.team.localeCompare(b.team)
     );
   }
 
   // ----------------------------------------------------
-  // Correct Export Function (INSIDE component)
+  // ZIP Export Button Handler
   // ----------------------------------------------------
   async function exportBundle() {
     const zipBlob = await buildZIP(standings, matches);
