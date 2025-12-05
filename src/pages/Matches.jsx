@@ -6,10 +6,11 @@ import {
 } from "../utils/storage";
 
 export default function Matches() {
-  const [tournament, setTournament] = useState(null);
+  const [tournamentName, setTournamentName] = useState("");
   const [matches, setMatches] = useState([]);
+  const [scoringMode, setScoringMode] = useState("standard"); // "standard" | "skins"
 
-  // Load active tournament + matches when page loads
+  // Load tournament
   useEffect(() => {
     const name = getActiveTournament();
     if (!name) return;
@@ -18,99 +19,43 @@ export default function Matches() {
     const data = all[name];
 
     if (data) {
-      setTournament({ name, ...data });
+      setTournamentName(name);
       setMatches(data.matches);
+      setScoringMode(data.scoringMode || "standard");
     }
   }, []);
 
-  // Save updates to storage for any match change
-  const persistMatches = (updatedMatches) => {
-    setMatches(updatedMatches);
-    const all = loadTournaments();
-    all[tournament.name].matches = updatedMatches;
-    saveTournaments(all);
-  };
-
-  // Standard match score update
-  const updateStandardScore = (rIndex, mIndex, field, value) => {
-    const updated = matches.map((round, ri) =>
-      round.map((m, mi) => {
-        if (ri === rIndex && mi === mIndex) {
-          return { ...m, [field]: value === "" ? null : Number(value) };
-        }
-        return m;
-      })
-    );
-    persistMatches(updated);
-  };
-
-  // SKINS: update skin value
-  const updateSkinScore = (rIndex, mIndex, skinIndex, side, value) => {
-    const updated = matches.map((round, ri) =>
-      round.map((m, mi) => {
-        if (ri === rIndex && mi === mIndex) {
-          const copy = { ...m, skins: m.skins.map((s) => ({ ...s })) };
-          copy.skins[skinIndex][side] = value === "" ? null : Number(value);
-
-          // recompute totals & points for the match
-          const totals = computeSkinsMatchTotals(copy.skins);
-          copy.totalA = totals.totalA;
-          copy.totalB = totals.totalB;
-          copy.skinPointsA = totals.skinPointsA;
-          copy.skinPointsB = totals.skinPointsB;
-          copy.bonusA = totals.bonusA;
-          copy.bonusB = totals.bonusB;
-          copy.matchPointsA = totals.matchPointsA;
-          copy.matchPointsB = totals.matchPointsB;
-
-          return copy;
-        }
-        return m;
-      })
-    );
-    persistMatches(updated);
-  };
-
-  // Compute skins totals & points (per match)
+  // For skins scoring
   const computeSkinsMatchTotals = (skins) => {
-    // skins: [{a,b},{a,b},{a,b}]
     let totalA = 0,
-      totalB = 0,
-      skinPointsA = 0,
+      totalB = 0;
+    let skinPointsA = 0,
       skinPointsB = 0;
 
     skins.forEach((s) => {
       const a = s.a == null ? null : Number(s.a);
       const b = s.b == null ? null : Number(s.b);
 
-      if (a == null || b == null) {
-        // incomplete skin; treat as zeros for totals but don't award points yet
-        if (a != null) totalA += a;
-        if (b != null) totalB += b;
-        return;
-      }
+      if (a != null) totalA += a;
+      if (b != null) totalB += b;
 
-      totalA += a;
-      totalB += b;
-
-      if (a > b) skinPointsA += 1;
-      else if (b > a) skinPointsB += 1;
-      else {
-        // tied skin: each get 0.5
-        skinPointsA += 0.5;
-        skinPointsB += 0.5;
+      if (a != null && b != null) {
+        if (a > b) skinPointsA += 1;
+        else if (b > a) skinPointsB += 1;
+        else {
+          skinPointsA += 0.5;
+          skinPointsB += 0.5;
+        }
       }
     });
 
-    // Bonus allocation by skin points
+    // Bonus allocation **BY TOTAL SHOTS** (your clarified rule)
     let bonusA = 0,
       bonusB = 0;
-    if (skinPointsA > skinPointsB) {
-      bonusA = 2;
-    } else if (skinPointsB > skinPointsA) {
-      bonusB = 2;
-    } else {
-      // tied skin points => share bonus 1 each
+    if (totalA > totalB) bonusA = 2;
+    else if (totalB > totalA) bonusB = 2;
+    else {
+      // equal totals → split
       bonusA = 1;
       bonusB = 1;
     }
@@ -130,17 +75,76 @@ export default function Matches() {
     };
   };
 
-  if (!tournament) {
-    return (
-      <div className="page">
-        <h2>No active tournament selected</h2>
-      </div>
-    );
+  const updateStandardScore = (roundIndex, matchIndex, field, value) => {
+    const newMatches = JSON.parse(JSON.stringify(matches));
+    const m = newMatches[roundIndex][matchIndex];
+
+    m[field] = value === "" ? null : Number(value);
+
+    // Clear any skins fields in case user changed scoring mode
+    delete m.skins;
+    delete m.totalA;
+    delete m.totalB;
+    delete m.skinPointsA;
+    delete m.skinPointsB;
+    delete m.bonusA;
+    delete m.bonusB;
+    delete m.matchPointsA;
+    delete m.matchPointsB;
+
+    setMatches(newMatches);
+
+    const all = loadTournaments();
+    all[tournamentName].matches = newMatches;
+    saveTournaments(all);
+  };
+
+  const updateSkinScore = (roundIndex, matchIndex, skinIndex, team, value) => {
+    const newMatches = JSON.parse(JSON.stringify(matches));
+    const m = newMatches[roundIndex][matchIndex];
+
+    if (!m.skins) {
+      m.skins = [
+        { a: null, b: null },
+        { a: null, b: null },
+        { a: null, b: null }
+      ];
+    }
+
+    m.skins[skinIndex][team] = value === "" ? null : Number(value);
+
+    // Recalculate totals
+    const totals = computeSkinsMatchTotals(m.skins);
+
+    m.totalA = totals.totalA;
+    m.totalB = totals.totalB;
+    m.skinPointsA = totals.skinPointsA;
+    m.skinPointsB = totals.skinPointsB;
+    m.bonusA = totals.bonusA;
+    m.bonusB = totals.bonusB;
+    m.matchPointsA = totals.matchPointsA;
+    m.matchPointsB = totals.matchPointsB;
+
+    // Clear standard score fields (avoid conflicts)
+    delete m.score1;
+    delete m.score2;
+
+    setMatches(newMatches);
+
+    const all = loadTournaments();
+    all[tournamentName].matches = newMatches;
+    saveTournaments(all);
+  };
+
+  if (!tournamentName) {
+    return <div className="page"><h2>No active tournament</h2></div>;
   }
 
   return (
     <div className="page">
-      <h2>Matches — {tournament.name}</h2>
+      <h2>Match Scoring — {tournamentName}</h2>
+
+      <p>Scoring Mode: <strong>{scoringMode}</strong></p>
 
       {matches.map((round, rIndex) => (
         <div key={rIndex} className="round-block">
@@ -148,110 +152,69 @@ export default function Matches() {
 
           {round.map((m, mIndex) => (
             <div key={mIndex} className="match-card">
-              <div className="match-teams">
-                <span className="team-name">{m.team1}</span>
-                <span className="vs">vs</span>
-                <span className="team-name">{m.team2}</span>
-              </div>
+              <h4>
+                {m.team1} vs {m.team2}
+              </h4>
 
-              {tournament.scoringMode === "skins" ? (
-                <div className="skins-input">
-                  <div style={{ marginBottom: "0.6rem" }}>
-                    <strong>Skin 1</strong>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="A"
-                      value={m.skins[0].a ?? ""}
-                      onChange={(e) =>
-                        updateSkinScore(rIndex, mIndex, 0, "a", e.target.value)
-                      }
-                    />
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="B"
-                      value={m.skins[0].b ?? ""}
-                      onChange={(e) =>
-                        updateSkinScore(rIndex, mIndex, 0, "b", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  <div style={{ marginBottom: "0.6rem" }}>
-                    <strong>Skin 2</strong>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="A"
-                      value={m.skins[1].a ?? ""}
-                      onChange={(e) =>
-                        updateSkinScore(rIndex, mIndex, 1, "a", e.target.value)
-                      }
-                    />
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="B"
-                      value={m.skins[1].b ?? ""}
-                      onChange={(e) =>
-                        updateSkinScore(rIndex, mIndex, 1, "b", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  <div style={{ marginBottom: "0.6rem" }}>
-                    <strong>Skin 3</strong>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="A"
-                      value={m.skins[2].a ?? ""}
-                      onChange={(e) =>
-                        updateSkinScore(rIndex, mIndex, 2, "a", e.target.value)
-                      }
-                    />
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="B"
-                      value={m.skins[2].b ?? ""}
-                      onChange={(e) =>
-                        updateSkinScore(rIndex, mIndex, 2, "b", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <div style={{ marginTop: "0.5rem" }}>
-                      <small>
-                        Totals — A: {m.totalA ?? 0} , B: {m.totalB ?? 0} &nbsp;
-                        Skins — A: {m.skinPointsA ?? 0} , B: {m.skinPointsB ?? 0}
-                        &nbsp; Bonus — A: {m.bonusA ?? 0} , B: {m.bonusB ?? 0}
-                        &nbsp; Match Points — A: {m.matchPointsA ?? 0} , B: {m.matchPointsB ?? 0}
-                      </small>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="match-scores">
+              {scoringMode === "standard" ? (
+                <div className="standard-score">
                   <input
                     type="number"
-                    min="0"
+                    placeholder={m.team1}
                     value={m.score1 ?? ""}
                     onChange={(e) =>
                       updateStandardScore(rIndex, mIndex, "score1", e.target.value)
                     }
                   />
-                  <span className="dash">-</span>
+                  <span className="vs">vs</span>
                   <input
                     type="number"
-                    min="0"
+                    placeholder={m.team2}
                     value={m.score2 ?? ""}
                     onChange={(e) =>
                       updateStandardScore(rIndex, mIndex, "score2", e.target.value)
                     }
                   />
+                </div>
+              ) : (
+                <div className="skins-score">
+                  {[0, 1, 2].map((s) => (
+                    <div key={s} className="skin-row">
+                      <span>Skin {s + 1}</span>
+
+                      <input
+                        type="number"
+                        placeholder={m.team1}
+                        value={m.skins?.[s]?.a ?? ""}
+                        onChange={(e) =>
+                          updateSkinScore(rIndex, mIndex, s, "a", e.target.value)
+                        }
+                      />
+
+                      <span className="vs">vs</span>
+
+                      <input
+                        type="number"
+                        placeholder={m.team2}
+                        value={m.skins?.[s]?.b ?? ""}
+                        onChange={(e) =>
+                          updateSkinScore(rIndex, mIndex, s, "b", e.target.value)
+                        }
+                      />
+                    </div>
+                  ))}
+
+                  {/* Summary block */}
+                  {(m.totalA != null || m.totalB != null) && (
+                    <div className="match-summary">
+                      <small>
+                        Totals — {m.team1}: {m.totalA ?? 0} , {m.team2}: {m.totalB ?? 0}
+                        &nbsp; | Skins — {m.team1}: {m.skinPointsA ?? 0} , {m.team2}: {m.skinPointsB ?? 0}
+                        &nbsp; | Bonus — {m.team1}: {m.bonusA ?? 0} , {m.team2}: {m.bonusB ?? 0}
+                        &nbsp; | Match Points — {m.team1}: {m.matchPointsA ?? 0} , {m.team2}: {m.matchPointsB ?? 0}
+                      </small>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

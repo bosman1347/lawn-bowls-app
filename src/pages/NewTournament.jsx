@@ -1,224 +1,235 @@
-import { useState } from "react";
-
+import { useState, useEffect } from "react";
 import {
   loadTournaments,
-  saveTournaments,
-  setActiveTournament
+  getActiveTournament
 } from "../utils/storage";
 
-export default function NewTournament() {
-  const [name, setName] = useState("");
-  const [numTeams, setNumTeams] = useState(4);
-  const [teams, setTeams] = useState(["", "", "", ""]);
-  const [scoringMode, setScoringMode] = useState("standard"); // "standard" or "skins"
+export default function Standings() {
+  const [tournamentName, setTournamentName] = useState("");
+  const [standings, setStandings] = useState([]);
 
-  // Update team count & resize list
-  const handleNumTeamsChange = (e) => {
-    const value = parseInt(e.target.value, 10) || 2;
-    setNumTeams(value);
+  useEffect(() => {
+    const name = getActiveTournament();
+    if (!name) return;
 
-    const updated = [...teams];
-    if (value > updated.length) {
-      while (updated.length < value) updated.push("");
-    } else {
-      updated.length = value;
-    }
-    setTeams(updated);
-  };
-
-  const handleTeamNameChange = (i, value) => {
-    const updated = [...teams];
-    updated[i] = value;
-    setTeams(updated);
-  };
-
-  // CREATE & SAVE TOURNAMENT
-  const createTournament = () => {
-    const trimmed = teams.map((t) => t.trim());
-
-    if (name.trim() === "") {
-      alert("Please enter a tournament name.");
-      return;
-    }
-
-    if (trimmed.some((t) => t === "")) {
-      alert("All team names must be filled in.");
-      return;
-    }
-
-    const duplicates = trimmed.filter((t, i) => trimmed.indexOf(t) !== i);
-    if (duplicates.length > 0) {
-      alert("Duplicate team names detected.");
-      return;
-    }
-
-    // Generate matches: use round-robin generator (keeps same structure)
-    const matchRounds = generateRoundRobin(trimmed);
-
-    // Load existing tournaments
     const all = loadTournaments();
+    const data = all[name];
 
-    if (all[name]) {
-      alert("A tournament with that name already exists.");
-      return;
+    if (data) {
+      setTournamentName(name);
+
+      const computed = computeStandings(data.matches);
+      setStandings(computed);
     }
+  }, []);
 
-    // Create minimal matches structure:
-    // For standard matches each match object will be { team1, team2, score1: null, score2: null }
-    // For skins mode, we'll store matches as { team1, team2, skins: [{a:null,b:null}, ...], totalA:0, totalB:0, skinPointsA:0, skinPointsB:0, bonusA:0, bonusB:0, matchPointsA:0, matchPointsB:0 }
-    const preparedRounds = matchRounds.map((round) =>
-      round.map((m) =>
-        scoringMode === "skins"
-          ? {
-              team1: m.team1,
-              team2: m.team2,
-              skins: [
-                { a: null, b: null },
-                { a: null, b: null },
-                { a: null, b: null }
-              ],
-              totalA: 0,
-              totalB: 0,
-              skinPointsA: 0,
-              skinPointsB: 0,
-              bonusA: 0,
-              bonusB: 0,
-              matchPointsA: 0,
-              matchPointsB: 0
-            }
-          : { team1: m.team1, team2: m.team2, score1: null, score2: null }
-      )
-    );
+  // computeStandings handles both standard and skins match formats
+  function computeStandings(matchRounds) {
+    const table = {};
 
-    // Add new tournament
-    all[name] = {
-      name,
-      numTeams,
-      teams: trimmed,
-      scoringMode,
-      created: new Date().toISOString(),
-      matches: preparedRounds,
-      results: {}
-    };
-
-    // Save database
-    saveTournaments(all);
-
-    // Set active tournament
-    setActiveTournament(name);
-
-    alert("Tournament created successfully!");
-
-    window.location.href = "/matches";
-  };
-
-  //-------------------------------------------------------
-  // Round Robin generator (simple)
-  //-------------------------------------------------------
-  function generateRoundRobin(teams) {
-    const n = teams.length;
-    const isOdd = n % 2 !== 0;
-
-    const list = isOdd ? [...teams, "BYE"] : [...teams];
-    const total = list.length;
-
-    const rounds = total - 1;
-    const half = total / 2;
-    const result = [];
-
-    let rotating = list.slice(1);
-
-    for (let r = 0; r < rounds; r++) {
-      const round = [];
-      const left = [list[0], ...rotating.slice(0, half - 1)];
-      const right = rotating.slice(half - 1).reverse();
-
-      for (let i = 0; i < half; i++) {
-        const team1 = left[i];
-        const team2 = right[i];
-
-        if (team1 !== "BYE" && team2 !== "BYE") {
-          round.push({
-            team1,
-            team2
-          });
+    matchRounds.forEach((round) => {
+      round.forEach((m) => {
+        // ensure team entries exist
+        if (!table[m.team1]) {
+          table[m.team1] = {
+            team: m.team1,
+            played: 0,
+            won: 0,
+            drawn: 0,
+            lost: 0,
+            points: 0,
+            shotsFor: 0,
+            shotsAgainst: 0,
+            diff: 0
+          };
         }
-      }
+        if (!table[m.team2]) {
+          table[m.team2] = {
+            team: m.team2,
+            played: 0,
+            won: 0,
+            drawn: 0,
+            lost: 0,
+            points: 0,
+            shotsFor: 0,
+            shotsAgainst: 0,
+            diff: 0
+          };
+        }
 
-      result.push(round);
+        const t1 = table[m.team1];
+        const t2 = table[m.team2];
 
-      rotating.push(rotating.shift());
-    }
+        // Standard match (score1/score2)
+        if (m.score1 != null && m.score2 != null) {
+          const s1 = Number(m.score1);
+          const s2 = Number(m.score2);
 
-    return result;
+          t1.played++;
+          t2.played++;
+
+          t1.shotsFor += s1;
+          t1.shotsAgainst += s2;
+          t2.shotsFor += s2;
+          t2.shotsAgainst += s1;
+
+          t1.diff = t1.shotsFor - t1.shotsAgainst;
+          t2.diff = t2.shotsFor - t2.shotsAgainst;
+
+          if (s1 > s2) {
+            t1.won++;
+            t1.points += 2;
+            t2.lost++;
+          } else if (s2 > s1) {
+            t2.won++;
+            t2.points += 2;
+            t1.lost++;
+          } else {
+            t1.drawn++;
+            t2.drawn++;
+            t1.points++;
+            t2.points++;
+          }
+        } else if (m.skins) {
+          // SKINS match
+          // skins: [{a,b},{a,b},{a,b}]
+          const skins = m.skins;
+          let totalA = 0,
+            totalB = 0;
+          let skinPointsA = 0,
+            skinPointsB = 0;
+
+          skins.forEach((s) => {
+            const a = s.a == null ? null : Number(s.a);
+            const b = s.b == null ? null : Number(s.b);
+            if (a != null) totalA += a;
+            if (b != null) totalB += b;
+
+            if (a != null && b != null) {
+              if (a > b) skinPointsA += 1;
+              else if (b > a) skinPointsB += 1;
+              else {
+                skinPointsA += 0.5;
+                skinPointsB += 0.5;
+              }
+            }
+          });
+
+          // accumulate shots even if partial
+          t1.shotsFor += totalA;
+          t1.shotsAgainst += totalB;
+          t2.shotsFor += totalB;
+          t2.shotsAgainst += totalA;
+
+          t1.diff = t1.shotsFor - t1.shotsAgainst;
+          t2.diff = t2.shotsFor - t2.shotsAgainst;
+
+          // Determine if match is fully entered (all 3 skins have both values)
+          const allSkinsComplete = skins.every((s) => s.a != null && s.b != null);
+
+          if (allSkinsComplete) {
+            // Only award played/wdl/points for fully completed matches
+            t1.played++;
+            t2.played++;
+
+            // Bonus allocation based on TOTAL SHOTS across skins (tie -> split)
+            let bonusA = 0,
+              bonusB = 0;
+            if (totalA > totalB) {
+              bonusA = 2;
+            } else if (totalB > totalA) {
+              bonusB = 2;
+            } else {
+              bonusA = 1;
+              bonusB = 1;
+            }
+
+            const matchPointsA = skinPointsA + bonusA;
+            const matchPointsB = skinPointsB + bonusB;
+
+            // Assign W/D/L based on matchPoints
+            if (matchPointsA > matchPointsB) {
+              t1.won++;
+              t1.points += matchPointsA;
+              t2.lost++;
+            } else if (matchPointsB > matchPointsA) {
+              t2.won++;
+              t2.points += matchPointsB;
+              t1.lost++;
+            } else {
+              // tie on match points
+              t1.drawn++;
+              t2.drawn++;
+              t1.points += matchPointsA;
+              t2.points += matchPointsB;
+            }
+          } else {
+            // partial entry: do NOT mark played or award W/D/L/points yet
+            // only shotsFor/Against updated above
+          }
+        }
+      });
+    });
+
+    // Sort by points, diff, shotsFor, name
+    return Object.values(table).sort((a, b) =>
+      b.points - a.points ||
+      b.diff - a.diff ||
+      b.shotsFor - a.shotsFor ||
+      a.team.localeCompare(b.team)
+    );
   }
 
-  //-------------------------------------------------------
-  // RENDER UI
-  //-------------------------------------------------------
+  if (!tournamentName) {
+    return <div className="page"><h2>No active tournament</h2></div>;
+  }
+
   return (
     <div className="page">
-      <h1>Create New Tournament</h1>
+      <h2>Standings — {tournamentName}</h2>
 
-      <div className="form-card">
-        {/* Tournament Name */}
-        <div className="form-group">
-          <label className="form-label">Tournament Name</label>
-          <input
-            className="form-input"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g., Summer Pairs 2025"
-          />
-        </div>
+      <table className="standings-table">
+        <thead>
+          <tr>
+            <th>Pos</th>
+            <th>Team</th>
+            <th>P</th>
+            <th>W</th>
+            <th>D</th>
+            <th>L</th>
+            <th>SF</th>
+            <th>SA</th>
+            <th>SD</th>
+            <th>Pts</th>
+          </tr>
+        </thead>
 
-        {/* Scoring Mode */}
-        <div className="form-group">
-          <label className="form-label">Scoring Mode</label>
-          <select
-            className="form-input"
-            value={scoringMode}
-            onChange={(e) => setScoringMode(e.target.value)}
-          >
-            <option value="standard">Standard (2–1–0; optional bonus)</option>
-            <option value="skins">Skins / Sets (3 × 5 ends)</option>
-          </select>
-        </div>
-
-        {/* Number of Teams */}
-        <div className="form-group">
-          <label className="form-label">Number of Teams</label>
-          <input
-            className="form-input"
-            type="number"
-            min="2"
-            value={numTeams}
-            onChange={handleNumTeamsChange}
-          />
-        </div>
-
-        {/* Team Inputs */}
-        <div className="form-group">
-          <label className="form-label">Team Names</label>
-          {teams.map((team, i) => (
-            <input
-              key={i}
-              className="form-input"
-              type="text"
-              value={team}
-              onChange={(e) => handleTeamNameChange(i, e.target.value)}
-              placeholder={`Team ${i + 1}`}
-              style={{ marginBottom: "0.6rem" }}
-            />
+        <tbody>
+          {standings.map((row, index) => (
+            <tr
+              key={row.team}
+              className={
+                index === 0
+                  ? "first-place"
+                  : index === 1
+                  ? "second-place"
+                  : ""
+              }
+            >
+              <td>{index + 1}</td>
+              <td>{row.team}</td>
+              <td>{row.played}</td>
+              <td>{row.won}</td>
+              <td>{row.drawn}</td>
+              <td>{row.lost}</td>
+              <td>{row.shotsFor}</td>
+              <td>{row.shotsAgainst}</td>
+              <td>{row.diff}</td>
+              <td>{row.points}</td>
+            </tr>
           ))}
-        </div>
-
-        {/* Create button */}
-        <button className="btn-primary" onClick={createTournament}>
-          Create Tournament
-        </button>
-      </div>
+        </tbody>
+      </table>
     </div>
   );
 }

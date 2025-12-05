@@ -115,14 +115,7 @@ export default function Standings() {
             }
           });
 
-          // Only count match as played if at least one skin has both values filled
-          const anyCompleteSkin = skins.some((s) => s.a != null && s.b != null);
-          if (anyCompleteSkin) {
-            t1.played++;
-            t2.played++;
-          }
-
-          // Shots totals
+          // accumulate shots even if partial
           t1.shotsFor += totalA;
           t1.shotsAgainst += totalB;
           t2.shotsFor += totalB;
@@ -131,36 +124,48 @@ export default function Standings() {
           t1.diff = t1.shotsFor - t1.shotsAgainst;
           t2.diff = t2.shotsFor - t2.shotsAgainst;
 
-          // Bonus allocation based on total skin points (tie -> split)
-          let bonusA = 0,
-            bonusB = 0;
-          if (skinPointsA > skinPointsB) {
-            bonusA = 2;
-          } else if (skinPointsB > skinPointsA) {
-            bonusB = 2;
-          } else {
-            bonusA = 1;
-            bonusB = 1;
-          }
+          // Determine if match is fully entered (all 3 skins have both values)
+          const allSkinsComplete = skins.every((s) => s.a != null && s.b != null);
 
-          const matchPointsA = skinPointsA + bonusA;
-          const matchPointsB = skinPointsB + bonusB;
+          if (allSkinsComplete) {
+            // Only award played/wdl/points for fully completed matches
+            t1.played++;
+            t2.played++;
 
-          // Assign points and W/D/L based on matchPoints
-          if (matchPointsA > matchPointsB) {
-            t1.won++;
-            t1.points += matchPointsA;
-            t2.lost++;
-          } else if (matchPointsB > matchPointsA) {
-            t2.won++;
-            t2.points += matchPointsB;
-            t1.lost++;
+            // Bonus allocation based on TOTAL SHOTS across skins (tie -> split)
+            let bonusA = 0,
+              bonusB = 0;
+            if (totalA > totalB) {
+              bonusA = 2;
+            } else if (totalB > totalA) {
+              bonusB = 2;
+            } else {
+              bonusA = 1;
+              bonusB = 1;
+            }
+
+            const matchPointsA = skinPointsA + bonusA;
+            const matchPointsB = skinPointsB + bonusB;
+
+            // Assign W/D/L based on matchPoints
+            if (matchPointsA > matchPointsB) {
+              t1.won++;
+              t1.points += matchPointsA;
+              t2.lost++;
+            } else if (matchPointsB > matchPointsA) {
+              t2.won++;
+              t2.points += matchPointsB;
+              t1.lost++;
+            } else {
+              // tie on match points
+              t1.drawn++;
+              t2.drawn++;
+              t1.points += matchPointsA;
+              t2.points += matchPointsB;
+            }
           } else {
-            // tie on match points
-            t1.drawn++;
-            t2.drawn++;
-            t1.points += matchPointsA;
-            t2.points += matchPointsB;
+            // partial entry: do NOT mark played or award W/D/L/points yet
+            // only shotsFor/Against updated above
           }
         }
       });
