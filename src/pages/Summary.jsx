@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   loadTournaments,
   getActiveTournament
@@ -6,12 +6,17 @@ import {
 
 import { buildZIP } from "../utils/exporter";
 
+/*
+ Patched Summary.jsx
+ - Memoizes standings calculation
+ - Shows full skins info for both teams
+ - Keeps export button
+*/
+
 export default function Summary() {
   const [tournamentName, setTournamentName] = useState("");
   const [matches, setMatches] = useState([]);
-  const [standings, setStandings] = useState([]);
 
-  // Load tournament data
   useEffect(() => {
     const name = getActiveTournament();
     if (!name) return;
@@ -21,20 +26,18 @@ export default function Summary() {
 
     if (data) {
       setTournamentName(name);
-      setMatches(data.matches);
-
-      // Recompute standings using unified logic (mirror of Standings.jsx)
-      const table = computeStandings(data.matches);
-      setStandings(table);
+      setMatches(data.matches || []);
     }
   }, []);
 
-  // computeStandings copied from the likewise corrected Standings logic
+  // memoized computeStandings so heavy work only runs when matches change
+  const standings = useMemo(() => computeStandings(matches), [JSON.stringify(matches)]);
+
   function computeStandings(matchRounds) {
     const table = {};
 
-    matchRounds.forEach((round) => {
-      round.forEach((m) => {
+    (matchRounds || []).forEach((round) => {
+      (round || []).forEach((m) => {
         if (!table[m.team1]) {
           table[m.team1] = {
             team: m.team1,
@@ -95,15 +98,15 @@ export default function Summary() {
             t2.points++;
           }
         } else if (m.skins) {
-          const skins = m.skins;
+          const skins = m.skins || [];
           let totalA = 0,
             totalB = 0;
           let skinPointsA = 0,
             skinPointsB = 0;
 
           skins.forEach((s) => {
-            const a = s.a == null ? null : Number(s.a);
-            const b = s.b == null ? null : Number(s.b);
+            const a = s?.a == null ? null : Number(s.a);
+            const b = s?.b == null ? null : Number(s.b);
             if (a != null) totalA += a;
             if (b != null) totalB += b;
 
@@ -126,7 +129,7 @@ export default function Summary() {
           t1.diff = t1.shotsFor - t1.shotsAgainst;
           t2.diff = t2.shotsFor - t2.shotsAgainst;
 
-          const allSkinsComplete = skins.every((s) => s.a != null && s.b != null);
+          const allSkinsComplete = skins.length === 3 && skins.every((s) => s?.a != null && s?.b != null);
 
           if (allSkinsComplete) {
             t1.played++;

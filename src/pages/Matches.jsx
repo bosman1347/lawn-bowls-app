@@ -1,14 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   loadTournaments,
   saveTournaments,
   getActiveTournament
 } from "../utils/storage";
 
+/*
+ Patched Matches.jsx
+ - Uses shallow updates (setMatches(prev => ...)) instead of deep cloning
+ - Debounces saving to storage (300ms)
+ - Keeps skins logic: totals, skinPoints, bonus (by total shots), matchPoints
+ - Keeps standard scoring support
+*/
+
 export default function Matches() {
   const [tournamentName, setTournamentName] = useState("");
   const [matches, setMatches] = useState([]);
   const [scoringMode, setScoringMode] = useState("standard"); // "standard" | "skins"
+
+  const saveTimeoutRef = useRef(null);
 
   // Load tournament
   useEffect(() => {
@@ -20,10 +30,26 @@ export default function Matches() {
 
     if (data) {
       setTournamentName(name);
-      setMatches(data.matches);
+      setMatches(data.matches || []);
       setScoringMode(data.scoringMode || "standard");
     }
   }, []);
+
+  // Debounced save helper
+  const saveMatchesToStorage = (latestMatches) => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      try {
+        const all = loadTournaments();
+        if (!all[tournamentName]) all[tournamentName] = {};
+        all[tournamentName].matches = latestMatches;
+        saveTournaments(all);
+      } catch (err) {
+        console.error("Error saving matches:", err);
+      }
+      saveTimeoutRef.current = null;
+    }, 300);
+  };
 
   // For skins scoring
   const computeSkinsMatchTotals = (skins) => {
@@ -33,8 +59,8 @@ export default function Matches() {
       skinPointsB = 0;
 
     skins.forEach((s) => {
-      const a = s.a == null ? null : Number(s.a);
-      const b = s.b == null ? null : Number(s.b);
+      const a = s?.a == null ? null : Number(s.a);
+      const b = s?.b == null ? null : Number(s.b);
 
       if (a != null) totalA += a;
       if (b != null) totalB += b;
@@ -49,13 +75,12 @@ export default function Matches() {
       }
     });
 
-    // Bonus allocation **BY TOTAL SHOTS** (your clarified rule)
+    // Bonus allocation BY TOTAL SHOTS (equal -> split)
     let bonusA = 0,
       bonusB = 0;
     if (totalA > totalB) bonusA = 2;
     else if (totalB > totalA) bonusB = 2;
     else {
-      // equal totals → split
       bonusA = 1;
       bonusB = 1;
     }
@@ -75,65 +100,76 @@ export default function Matches() {
     };
   };
 
+  // Standard match update (shallow update, debounced save)
   const updateStandardScore = (roundIndex, matchIndex, field, value) => {
-    const newMatches = JSON.parse(JSON.stringify(matches));
-    const m = newMatches[roundIndex][matchIndex];
+    setMatches((prev) => {
+      const next = prev.map((round, ri) =>
+        ri !== roundIndex
+          ? round
+          : round.map((m, mi) => {
+              if (mi !== matchIndex) return m;
+              const updated = { ...m, [field]: value === "" ? null : Number(value) };
 
-    m[field] = value === "" ? null : Number(value);
+              // if switching to standard, clear skins data
+              if (field === "score1" || field === "score2") {
+                delete updated.skins;
+                delete updated.totalA;
+                delete updated.totalB;
+                delete updated.skinPointsA;
+                delete updated.skinPointsB;
+                delete updated.bonusA;
+                delete updated.bonusB;
+                delete updated.matchPointsA;
+                delete updated.matchPointsB;
+              }
 
-    // Clear any skins fields in case user changed scoring mode
-    delete m.skins;
-    delete m.totalA;
-    delete m.totalB;
-    delete m.skinPointsA;
-    delete m.skinPointsB;
-    delete m.bonusA;
-    delete m.bonusB;
-    delete m.matchPointsA;
-    delete m.matchPointsB;
+              return updated;
+            })
+      );
 
-    setMatches(newMatches);
-
-    const all = loadTournaments();
-    all[tournamentName].matches = newMatches;
-    saveTournaments(all);
+      saveMatchesToStorage(next);
+      return next;
+    });
   };
 
+  // Skins update (shallow update, debounced save)
   const updateSkinScore = (roundIndex, matchIndex, skinIndex, team, value) => {
-    const newMatches = JSON.parse(JSON.stringify(matches));
-    const m = newMatches[roundIndex][matchIndex];
+    setMatches((prev) => {
+      const next = prev.map((round, ri) =>
+        ri !== roundIndex
+          ? round
+          : round.map((m, mi) => {
+              if (mi !== matchIndex) return m;
 
-    if (!m.skins) {
-      m.skins = [
-        { a: null, b: null },
-        { a: null, b: null },
-        { a: null, b: null }
-      ];
-    }
+              const updated = { ...m };
+              if (!updated.skins) updated.skins = [{ a: null, b: null }, { a: null, b: null }, { a: null, b: null }];
 
-    m.skins[skinIndex][team] = value === "" ? null : Number(value);
+              // shallow copy skin row
+              updated.skins = updated.skins.map((s, si) => (si === skinIndex ? { ...s } : s));
+              updated.skins[skinIndex][team] = value === "" ? null : Number(value);
 
-    // Recalculate totals
-    const totals = computeSkinsMatchTotals(m.skins);
+              // Recompute totals
+              const totals = computeSkinsMatchTotals(updated.skins);
+              updated.totalA = totals.totalA;
+              updated.totalB = totals.totalB;
+              updated.skinPointsA = totals.skinPointsA;
+              updated.skinPointsB = totals.skinPointsB;
+              updated.bonusA = totals.bonusA;
+              updated.bonusB = totals.bonusB;
+              updated.matchPointsA = totals.matchPointsA;
+              updated.matchPointsB = totals.matchPointsB;
 
-    m.totalA = totals.totalA;
-    m.totalB = totals.totalB;
-    m.skinPointsA = totals.skinPointsA;
-    m.skinPointsB = totals.skinPointsB;
-    m.bonusA = totals.bonusA;
-    m.bonusB = totals.bonusB;
-    m.matchPointsA = totals.matchPointsA;
-    m.matchPointsB = totals.matchPointsB;
+              // Clear standard fields if any
+              delete updated.score1;
+              delete updated.score2;
 
-    // Clear standard score fields (avoid conflicts)
-    delete m.score1;
-    delete m.score2;
+              return updated;
+            })
+      );
 
-    setMatches(newMatches);
-
-    const all = loadTournaments();
-    all[tournamentName].matches = newMatches;
-    saveTournaments(all);
+      saveMatchesToStorage(next);
+      return next;
+    });
   };
 
   if (!tournamentName) {

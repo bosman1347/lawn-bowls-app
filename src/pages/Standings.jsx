@@ -1,12 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   loadTournaments,
   getActiveTournament
 } from "../utils/storage";
 
+/*
+ Patched Standings.jsx
+ - computeStandings is memoized with useMemo
+ - only recalculates when matches data changes
+ - uses 'allSkinsComplete' logic so partial skins don't mark played/W/D/L
+*/
+
 export default function Standings() {
   const [tournamentName, setTournamentName] = useState("");
-  const [standings, setStandings] = useState([]);
+  const [matches, setMatches] = useState([]);
 
   useEffect(() => {
     const name = getActiveTournament();
@@ -17,19 +24,21 @@ export default function Standings() {
 
     if (data) {
       setTournamentName(name);
-
-      const computed = computeStandings(data.matches);
-      setStandings(computed);
+      setMatches(data.matches || []);
     }
   }, []);
 
-  // computeStandings handles both standard and skins match formats
+  // memoized computeStandings - runs only when matches changes
+  const computedStandings = useMemo(() => {
+    return computeStandings(matches);
+  }, [JSON.stringify(matches)]); // stringify is cheap enough for moderate sizes
+
+  // computeStandings implementation
   function computeStandings(matchRounds) {
     const table = {};
 
-    matchRounds.forEach((round) => {
-      round.forEach((m) => {
-        // ensure team entries exist
+    (matchRounds || []).forEach((round) => {
+      (round || []).forEach((m) => {
         if (!table[m.team1]) {
           table[m.team1] = {
             team: m.team1,
@@ -60,7 +69,7 @@ export default function Standings() {
         const t1 = table[m.team1];
         const t2 = table[m.team2];
 
-        // Standard match (score1/score2)
+        // Standard match
         if (m.score1 != null && m.score2 != null) {
           const s1 = Number(m.score1);
           const s2 = Number(m.score2);
@@ -92,16 +101,13 @@ export default function Standings() {
           }
         } else if (m.skins) {
           // SKINS match
-          // skins: [{a,b},{a,b},{a,b}]
-          const skins = m.skins;
-          let totalA = 0,
-            totalB = 0;
-          let skinPointsA = 0,
-            skinPointsB = 0;
+          const skins = m.skins || [];
+          let totalA = 0, totalB = 0;
+          let skinPointsA = 0, skinPointsB = 0;
 
           skins.forEach((s) => {
-            const a = s.a == null ? null : Number(s.a);
-            const b = s.b == null ? null : Number(s.b);
+            const a = s?.a == null ? null : Number(s.a);
+            const b = s?.b == null ? null : Number(s.b);
             if (a != null) totalA += a;
             if (b != null) totalB += b;
 
@@ -124,22 +130,18 @@ export default function Standings() {
           t1.diff = t1.shotsFor - t1.shotsAgainst;
           t2.diff = t2.shotsFor - t2.shotsAgainst;
 
-          // Determine if match is fully entered (all 3 skins have both values)
-          const allSkinsComplete = skins.every((s) => s.a != null && s.b != null);
+          // Fully completed match only when all skins have both values
+          const allSkinsComplete = skins.length === 3 && skins.every((s) => s?.a != null && s?.b != null);
 
           if (allSkinsComplete) {
-            // Only award played/wdl/points for fully completed matches
             t1.played++;
             t2.played++;
 
-            // Bonus allocation based on TOTAL SHOTS across skins (tie -> split)
-            let bonusA = 0,
-              bonusB = 0;
-            if (totalA > totalB) {
-              bonusA = 2;
-            } else if (totalB > totalA) {
-              bonusB = 2;
-            } else {
+            // Bonus by total shots (split if equal)
+            let bonusA = 0, bonusB = 0;
+            if (totalA > totalB) bonusA = 2;
+            else if (totalB > totalA) bonusB = 2;
+            else {
               bonusA = 1;
               bonusB = 1;
             }
@@ -147,7 +149,6 @@ export default function Standings() {
             const matchPointsA = skinPointsA + bonusA;
             const matchPointsB = skinPointsB + bonusB;
 
-            // Assign W/D/L based on matchPoints
             if (matchPointsA > matchPointsB) {
               t1.won++;
               t1.points += matchPointsA;
@@ -157,21 +158,18 @@ export default function Standings() {
               t2.points += matchPointsB;
               t1.lost++;
             } else {
-              // tie on match points
               t1.drawn++;
               t2.drawn++;
               t1.points += matchPointsA;
               t2.points += matchPointsB;
             }
           } else {
-            // partial entry: do NOT mark played or award W/D/L/points yet
-            // only shotsFor/Against updated above
+            // partial: don't increment played/WDL; shots already accumulated
           }
         }
       });
     });
 
-    // Sort by points, diff, shotsFor, name
     return Object.values(table).sort((a, b) =>
       b.points - a.points ||
       b.diff - a.diff ||
@@ -183,6 +181,8 @@ export default function Standings() {
   if (!tournamentName) {
     return <div className="page"><h2>No active tournament</h2></div>;
   }
+
+  const standings = computedStandings;
 
   return (
     <div className="page">
