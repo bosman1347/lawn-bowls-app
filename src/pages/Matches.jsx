@@ -29,11 +29,12 @@ export default function Matches() {
     const all = loadTournaments();
     const data = all[name];
 
-    if (data) {
-      setTournamentName(name);
-      setMatches(data.matches || []);
-      setScoringMode(data.scoringMethod || "standard");
-    }
+   if (data) {
+		setTournamentName(name);
+		setMatches(data.matches || []);
+		setScoringMode(data.scoringMethod || "standard");
+	}
+
   }, []);
 
   // Debounced save helper
