@@ -16,7 +16,8 @@ import {
 export default function Matches() {
   const [tournamentName, setTournamentName] = useState("");
   const [matches, setMatches] = useState([]);
-  const [scoringMode, setScoringMethod] = useState("standard"); // "standard" | "skins"
+ const [scoringMode, setScoringMode] = useState("standard");
+
 
   const saveTimeoutRef = useRef(null);
 
