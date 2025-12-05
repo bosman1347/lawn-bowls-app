@@ -23,13 +23,13 @@ export default function Summary() {
       setTournamentName(name);
       setMatches(data.matches);
 
-      // Recompute standings using unified logic
+      // Recompute standings using unified logic (mirror of Standings.jsx)
       const table = computeStandings(data.matches);
       setStandings(table);
     }
   }, []);
 
-  // Unified computeStandings (same logic as Standings.jsx)
+  // computeStandings copied from the likewise corrected Standings logic
   function computeStandings(matchRounds) {
     const table = {};
 
@@ -117,12 +117,7 @@ export default function Summary() {
             }
           });
 
-          const anyCompleteSkin = skins.some((s) => s.a != null && s.b != null);
-          if (anyCompleteSkin) {
-            t1.played++;
-            t2.played++;
-          }
-
+          // accumulate shots even if partial
           t1.shotsFor += totalA;
           t1.shotsAgainst += totalB;
           t2.shotsFor += totalB;
@@ -131,31 +126,39 @@ export default function Summary() {
           t1.diff = t1.shotsFor - t1.shotsAgainst;
           t2.diff = t2.shotsFor - t2.shotsAgainst;
 
-          let bonusA = 0,
-            bonusB = 0;
-          if (skinPointsA > skinPointsB) bonusA = 2;
-          else if (skinPointsB > skinPointsA) bonusB = 2;
-          else {
-            bonusA = 1;
-            bonusB = 1;
-          }
+          const allSkinsComplete = skins.every((s) => s.a != null && s.b != null);
 
-          const matchPointsA = skinPointsA + bonusA;
-          const matchPointsB = skinPointsB + bonusB;
+          if (allSkinsComplete) {
+            t1.played++;
+            t2.played++;
 
-          if (matchPointsA > matchPointsB) {
-            t1.won++;
-            t1.points += matchPointsA;
-            t2.lost++;
-          } else if (matchPointsB > matchPointsA) {
-            t2.won++;
-            t2.points += matchPointsB;
-            t1.lost++;
-          } else {
-            t1.drawn++;
-            t2.drawn++;
-            t1.points += matchPointsA;
-            t2.points += matchPointsB;
+            // bonus by total shots (tie -> split)
+            let bonusA = 0,
+              bonusB = 0;
+            if (totalA > totalB) bonusA = 2;
+            else if (totalB > totalA) bonusB = 2;
+            else {
+              bonusA = 1;
+              bonusB = 1;
+            }
+
+            const matchPointsA = skinPointsA + bonusA;
+            const matchPointsB = skinPointsB + bonusB;
+
+            if (matchPointsA > matchPointsB) {
+              t1.won++;
+              t1.points += matchPointsA;
+              t2.lost++;
+            } else if (matchPointsB > matchPointsA) {
+              t2.won++;
+              t2.points += matchPointsB;
+              t1.lost++;
+            } else {
+              t1.drawn++;
+              t2.drawn++;
+              t1.points += matchPointsA;
+              t2.points += matchPointsB;
+            }
           }
         }
       });
@@ -169,7 +172,6 @@ export default function Summary() {
     );
   }
 
-  // Export
   async function exportBundle() {
     const zipBlob = await buildZIP(standings, matches);
 
@@ -221,6 +223,15 @@ export default function Summary() {
               >
                 <div className="summary-team">
                   <strong>{m.team1}</strong>
+                  {/* show skins for team1 if present */}
+                  {m.skins ? (
+                    <div>
+                      S1:{m.skins[0].a ?? "-"} S2:{m.skins[1].a ?? "-"} S3:{m.skins[2].a ?? "-"} <br />
+                      Tot:{m.totalA ?? 0} &nbsp; MP:{m.matchPointsA ?? "-"}
+                    </div>
+                  ) : m.score1 != null ? (
+                    <div>{m.score1}</div>
+                  ) : null}
                 </div>
 
                 <div className="summary-score">
@@ -229,17 +240,27 @@ export default function Summary() {
                       {m.score1} <span className="summary-vs">vs</span> {m.score2}
                     </>
                   ) : m.skins ? (
-                    <>
-                      S1:{m.skins[0].a ?? "-"} S2:{m.skins[1].a ?? "-"} S3:{m.skins[2].a ?? "-"} <br />
-                      Tot:{m.totalA ?? 0}
-                    </>
+                    <div style={{ textAlign: "center" }}>
+                      <div>Skins: {m.skinPointsA ?? 0} - {m.skinPointsB ?? 0}</div>
+                      <div>Totals: {m.totalA ?? 0} - {m.totalB ?? 0}</div>
+                      <div>MP: {m.matchPointsA ?? "-"} - {m.matchPointsB ?? "-"}</div>
+                    </div>
                   ) : (
                     <>-</>
                   )}
                 </div>
 
-                <div className="summary-team">
+                <div className="summary-team" style={{ textAlign: "right" }}>
                   <strong>{m.team2}</strong>
+                  {/* show skins for team2 if present */}
+                  {m.skins ? (
+                    <div>
+                      S1:{m.skins[0].b ?? "-"} S2:{m.skins[1].b ?? "-"} S3:{m.skins[2].b ?? "-"} <br />
+                      Tot:{m.totalB ?? 0} &nbsp; MP:{m.matchPointsB ?? "-"}
+                    </div>
+                  ) : m.score2 != null ? (
+                    <div>{m.score2}</div>
+                  ) : null}
                 </div>
               </div>
             ))}
