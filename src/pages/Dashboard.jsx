@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { generateNextRound } from "../utils/pairings";
 
-
 import {
   loadTournaments,
   saveTournaments,
@@ -26,37 +25,6 @@ export default function Dashboard() {
     setActiveTournament(name);
     setActive(name);
   };
-  
-  //Generate next round
-  const handleGenerateNextRound = () => {
-  const all = loadTournaments();
-  const name = activeTournament; // or whatever state you use for the current one
-  if (!name || !all[name]) {
-    alert("No active tournament selected.");
-    return;
-  }
-
-  const t = all[name];
-  const teams = t.tournament || [];
-  const matches = t.matches || [];
-  const scoringMethod = t.scoringMethod || "standard";
-
-  const newRound = generateNextRound(teams, matches, scoringMethod);
-
-  if (!newRound || newRound.length === 0) {
-    alert("Could not generate a new round. Check that you have at least two teams.");
-    return;
-  }
-
-  t.matches = [...matches, newRound];
-  all[name] = t;
-  saveTournaments(all);
-
-  // Optionally ensure this is still the active tournament
-  setActiveTournament(name);
-  
-  
-
 
   // Rename a tournament
   const renameTournament = (oldName) => {
@@ -76,13 +44,11 @@ export default function Dashboard() {
       return;
     }
 
-    // Copy old tournament data
     all[trimmed] = { ...all[oldName], name: trimmed };
     delete all[oldName];
 
     saveTournaments(all);
 
-    // Update active tournament if needed
     if (getActiveTournament() === oldName) {
       setActiveTournament(trimmed);
       setActive(trimmed);
@@ -101,7 +67,6 @@ export default function Dashboard() {
       return;
     }
 
-    // Generate unique name
     let newName = name + " (copy)";
     let counter = 2;
     while (all[newName]) {
@@ -109,14 +74,13 @@ export default function Dashboard() {
       counter++;
     }
 
-    // Safe cloned tournament
     const copy = {
       name: newName,
       numTeams: original.numTeams,
-      teams: [...original.teams],
+      tournament: [...original.tournament],
       created: new Date().toISOString(),
       matches: JSON.parse(JSON.stringify(original.matches)),
-      results: {}
+      scoringMethod: original.scoringMethod
     };
 
     all[newName] = copy;
@@ -124,7 +88,6 @@ export default function Dashboard() {
 
     setActiveTournament(newName);
     setActive(newName);
-
     setList(Object.keys(all));
   };
 
@@ -143,137 +106,112 @@ export default function Dashboard() {
 
     setList(Object.keys(all));
   };
-  
+
+  // Generate next round
   const handleGenerateNextRound = () => {
-  const all = loadTournaments();
-  const name = getActiveTournament();
+    const all = loadTournaments();
+    const name = getActiveTournament();
 
-  if (!name || !all[name]) {
-    alert("No active tournament selected.");
-    return;
-  }
+    if (!name || !all[name]) {
+      alert("No active tournament selected.");
+      return;
+    }
 
-  const tournament = all[name];
+    const tournament = all[name];
 
-  const teams = tournament.tournament || [];
-  const matches = tournament.matches || [];
-  const scoringMethod = tournament.scoringMethod || "standard";
+    const teams = tournament.tournament || [];
+    const matches = tournament.matches || [];
+    const scoringMethod = tournament.scoringMethod || "standard";
 
-  const nextRound = generateNextRound(teams, matches, scoringMethod);
+    const nextRound = generateNextRound(teams, matches, scoringMethod);
 
-  if (!nextRound || nextRound.length === 0) {
-    alert("Could not generate a new round. There may be too few teams.");
-    return;
-  }
+    if (!nextRound || nextRound.length === 0) {
+      alert("Could not generate a new round. There may be too few teams.");
+      return;
+    }
 
-  // Append the generated round
-  tournament.matches = [...matches, nextRound];
-  all[name] = tournament;
+    tournament.matches = [...matches, nextRound];
+    all[name] = tournament;
 
-  saveTournaments(all);
-  setActiveTournament(name);
+    saveTournaments(all);
+    setActiveTournament(name);
 
-  // Redirect to Matches so user sees the new round
-  window.location.href = "/matches";
-};
+    // Redirect to Matches page
+    window.location.href = "/matches";
+  };
 
+  return (
+    <div className="page">
+      <h1 style={{ marginBottom: "2rem" }}>Tournament Dashboard</h1>
 
- return (
-  <div className="page">
-    <h1 style={{ marginBottom: "2rem" }}>Tournament Dashboard</h1>
+      <Link to="/new">
+        <button className="btn-primary">➕ Create New Tournament</button>
+      </Link>
 
-    <Link to="/new">
-      <button className="btn-primary">➕ Create New Tournament</button>
-    </Link>
-	
-
-
-
-
-  // Go straight to Matches so they see the new round
-  window.location.href = "/matches";
-};
-
-    <h2>Saved Tournaments</h2>
-
-    {list.length === 0 ? (
-      <p>No tournaments created yet.</p>
-    ) : (
-     <div className="tournament-row dashboard-card" key={name}>
-        {list.map((name) => (
-          <div
-            key={name}
-            className={`tournament-card ${
-              active === name ? "active-card" : ""
-            }`}
-          >
-            <h3>{name}</h3>
-
-            <div className="card-buttons">
-              <button
-				className="btn-secondary"
-					onClick={() => openTournament(name)}
-						>
-						Open
-			   </button>
-			   
-
-				<button
-					className="btn-secondary"
-						onClick={() => renameTournament(name)}
-							>
-							Rename
-			   </button>
-			   
-			   	//Create "Next Round" button
-  {activeTournament && (
-  <div className="dashboard-actions">
-    <button className="btn-primary" onClick={handleGenerateNextRound}>
-      Generate Next Round
-    </button>
-  </div>
-)}
-
-				<button
-					className="btn-secondary"
-						onClick={() => duplicateTournament(name)}
-						>
-						Duplicate
-			   </button>
-
-				<button
-					className="btn-danger"
-						onClick={() => deleteTournament(name)}
-						>
-						Delete
-			     </button>
-			
-            </div>
-          </div>
-        ))}
-      </div>
-    )}
-
-    {active && (
-      <div>
-        <h3>Active Tournament: {active}</h3>
-
-        <div className="active-buttons">
-          <Link to="/matches">
-            <button className="btn-primary">Matches</button>
-          </Link>
-
-          <Link to="/standings">
-            <button className="btn-primary">Standings</button>
-          </Link>
-
-          <Link to="/summary">
-            <button className="btn-primary">Summary</button>
-          </Link>
+      {active && (
+        <div style={{ marginTop: "20px" }}>
+          <button className="btn-primary" onClick={handleGenerateNextRound}>
+            Generate Next Round
+          </button>
         </div>
-      </div>
-    )}
-  </div>
-//);
-}
+      )}
 
+      <h2 style={{ marginTop: "2rem" }}>Saved Tournaments</h2>
+
+      {list.length === 0 ? (
+        <p>No tournaments created yet.</p>
+      ) : (
+        <div className="tournament-row">
+          {list.map((name) => (
+            <div
+              key={name}
+              className={`tournament-card ${
+                active === name ? "active-card" : ""
+              }`}
+            >
+              <h3>{name}</h3>
+
+              <div className="card-buttons">
+                <button className="btn-secondary" onClick={() => openTournament(name)}>
+                  Open
+                </button>
+
+                <button className="btn-secondary" onClick={() => renameTournament(name)}>
+                  Rename
+                </button>
+
+                <button className="btn-secondary" onClick={() => duplicateTournament(name)}>
+                  Duplicate
+                </button>
+
+                <button className="btn-danger" onClick={() => deleteTournament(name)}>
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {active && (
+        <div>
+          <h3 style={{ marginTop: "2rem" }}>Active Tournament: {active}</h3>
+
+          <div className="active-buttons">
+            <Link to="/matches">
+              <button className="btn-primary">Matches</button>
+            </Link>
+
+            <Link to="/standings">
+              <button className="btn-primary">Standings</button>
+            </Link>
+
+            <Link to="/summary">
+              <button className="btn-primary">Summary</button>
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
