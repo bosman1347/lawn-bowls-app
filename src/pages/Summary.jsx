@@ -6,13 +6,6 @@ import {
 
 import { buildZIP } from "../utils/exporter";
 
-/*
- Patched Summary.jsx
- - Memoizes standings calculation
- - Shows full skins info for both teams
- - Keeps export button
-*/
-
 export default function Summary() {
   const [tournamentName, setTournamentName] = useState("");
   const [matches, setMatches] = useState([]);
@@ -30,8 +23,10 @@ export default function Summary() {
     }
   }, []);
 
-  // memoized computeStandings so heavy work only runs when matches change
-  const standings = useMemo(() => computeStandings(matches), [JSON.stringify(matches)]);
+  const standings = useMemo(
+    () => computeStandings(matches),
+    [JSON.stringify(matches)]
+  );
 
   function computeStandings(matchRounds) {
     const table = {};
@@ -129,7 +124,9 @@ export default function Summary() {
           t1.diff = t1.shotsFor - t1.shotsAgainst;
           t2.diff = t2.shotsFor - t2.shotsAgainst;
 
-          const allSkinsComplete = skins.length === 3 && skins.every((s) => s?.a != null && s?.b != null);
+          const allSkinsComplete =
+            skins.length === 3 &&
+            skins.every((s) => s?.a != null && s?.b != null);
 
           if (allSkinsComplete) {
             t1.played++;
@@ -167,11 +164,12 @@ export default function Summary() {
       });
     });
 
-    return Object.values(table).sort((a, b) =>
-      b.points - a.points ||
-      b.diff - a.diff ||
-      b.shotsFor - a.shotsFor ||
-      a.team.localeCompare(b.team)
+    return Object.values(table).sort(
+      (a, b) =>
+        b.points - a.points ||
+        b.diff - a.diff ||
+        b.shotsFor - a.shotsFor ||
+        a.team.localeCompare(b.team)
     );
   }
 
@@ -213,60 +211,93 @@ export default function Summary() {
           <div key={rIndex} className="summary-round-card">
             <h3>Round {rIndex + 1}</h3>
 
-            {round.map((m, mIndex) => (
-              <div
-                key={mIndex}
-                className={`summary-match ${
-                  // mark complete if standard scores present OR all skins have values
-                  (m.score1 != null && m.score2 != null) ||
-                  (m.skins && m.skins.every((s) => s.a != null && s.b != null))
-                    ? "summary-complete"
-                    : ""
-                }`}
-              >
-                <div className="summary-team">
-                  <strong>{m.team1}</strong>
-                  {/* show skins for team1 if present */}
-                  {m.skins ? (
-                    <div>
-                      S1:{m.skins[0].a ?? "-"} S2:{m.skins[1].a ?? "-"} S3:{m.skins[2].a ?? "-"} <br />
-                      Tot:{m.totalA ?? 0} &nbsp; MP:{m.matchPointsA ?? "-"}
-                    </div>
-                  ) : m.score1 != null ? (
-                    <div>{m.score1}</div>
-                  ) : null}
-                </div>
+            {round.map((m, mIndex) => {
+              const isStandardComplete =
+                m.score1 != null && m.score2 != null;
+              const isSkinsComplete =
+                m.skins &&
+                m.skins.length === 3 &&
+                m.skins.every((s) => s.a != null && s.b != null);
 
-                <div className="summary-score">
-                  {m.score1 != null && m.score2 != null ? (
-                    <>
-                      {m.score1} <span className="summary-vs">vs</span> {m.score2}
-                    </>
-                  ) : m.skins ? (
-                    <div style={{ textAlign: "center" }}>
-                      <div>Skins: {m.skinPointsA ?? 0} - {m.skinPointsB ?? 0}</div>
-                      <div>Totals: {m.totalA ?? 0} - {m.totalB ?? 0}</div>
-                      <div>MP: {m.matchPointsA ?? "-"} - {m.matchPointsB ?? "-"}</div>
-                    </div>
-                  ) : (
-                    <>-</>
-                  )}
-                </div>
+              const isComplete =
+                isStandardComplete || isSkinsComplete;
 
-                <div className="summary-team" style={{ textAlign: "right" }}>
-                  <strong>{m.team2}</strong>
-                  {/* show skins for team2 if present */}
-                  {m.skins ? (
-                    <div>
-                      S1:{m.skins[0].b ?? "-"} S2:{m.skins[1].b ?? "-"} S3:{m.skins[2].b ?? "-"} <br />
-                      Tot:{m.totalB ?? 0} &nbsp; MP:{m.matchPointsB ?? "-"}
-                    </div>
-                  ) : m.score2 != null ? (
-                    <div>{m.score2}</div>
-                  ) : null}
+              const matchClass = [
+                "summary-match",
+                isComplete ? "summary-complete" : "",
+                m.verified ? "summary-verified" : ""
+              ]
+                .join(" ")
+                .trim();
+
+              return (
+                <div key={mIndex} className={matchClass}>
+                  <div className="summary-header">
+                    <span className="summary-title">
+                      {m.team1} vs {m.team2}
+                    </span>
+                    {m.verified ? (
+                      <span className="badge-verified">Verified ✓</span>
+                    ) : isComplete ? (
+                      <span className="badge-pending">Complete — Not Verified</span>
+                    ) : (
+                      <span className="badge-incomplete">In Progress</span>
+                    )}
+                  </div>
+
+                  <div className="summary-team">
+                    <strong>{m.team1}</strong>
+                    {m.skins ? (
+                      <div>
+                        S1:{m.skins[0].a ?? "-"} S2:{m.skins[1].a ?? "-"} S3:{m.skins[2].a ?? "-"} <br />
+                        Tot:{m.totalA ?? 0} &nbsp; MP:{m.matchPointsA ?? "-"}
+                      </div>
+                    ) : m.score1 != null ? (
+                      <div>{m.score1}</div>
+                    ) : null}
+                  </div>
+
+                  <div className="summary-score">
+                    {m.score1 != null && m.score2 != null ? (
+                      <>
+                        {m.score1} <span className="summary-vs">vs</span>{" "}
+                        {m.score2}
+                      </>
+                    ) : m.skins ? (
+                      <div style={{ textAlign: "center" }}>
+                        <div>
+                          Skins: {m.skinPointsA ?? 0} - {m.skinPointsB ?? 0}
+                        </div>
+                        <div>
+                          Totals: {m.totalA ?? 0} - {m.totalB ?? 0}
+                        </div>
+                        <div>
+                          MP: {m.matchPointsA ?? "-"} -{" "}
+                          {m.matchPointsB ?? "-"}
+                        </div>
+                      </div>
+                    ) : (
+                      <>-</>
+                    )}
+                  </div>
+
+                  <div
+                    className="summary-team"
+                    style={{ textAlign: "right" }}
+                  >
+                    <strong>{m.team2}</strong>
+                    {m.skins ? (
+                      <div>
+                        S1:{m.skins[0].b ?? "-"} S2:{m.skins[1].b ?? "-"} S3:{m.skins[2].b ?? "-"} <br />
+                        Tot:{m.totalB ?? 0} &nbsp; MP:{m.matchPointsB ?? "-"}
+                      </div>
+                    ) : m.score2 != null ? (
+                      <div>{m.score2}</div>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ))}
       </div>
