@@ -21,11 +21,13 @@ export default function Standings() {
     }
   }, []);
 
+  // memoized standings so heavy calc only runs when matches change
   const computedStandings = useMemo(
     () => computeStandings(matches),
     [JSON.stringify(matches)]
   );
 
+  // count verified vs total matches
   const { totalMatches, verifiedMatches } = useMemo(() => {
     let total = 0;
     let verified = 0;
@@ -75,6 +77,7 @@ export default function Standings() {
         const t1 = table[m.team1];
         const t2 = table[m.team2];
 
+        // STANDARD scoring
         if (m.score1 != null && m.score2 != null) {
           const s1 = Number(m.score1);
           const s2 = Number(m.score2);
@@ -104,7 +107,10 @@ export default function Standings() {
             t1.points++;
             t2.points++;
           }
-        } else if (m.skins) {
+        }
+
+        // SKINS scoring
+        else if (m.skins) {
           const skins = m.skins || [];
           let totalA = 0,
             totalB = 0;
@@ -144,7 +150,7 @@ export default function Standings() {
             t1.played++;
             t2.played++;
 
-            // bonus by total shots (split if equal)
+            // Bonus by total shots (split if equal)
             let bonusA = 0,
               bonusB = 0;
             if (totalA > totalB) bonusA = 2;
@@ -157,17 +163,24 @@ export default function Standings() {
             const matchPointsA = skinPointsA + bonusA;
             const matchPointsB = skinPointsB + bonusB;
 
+            // ✅ FIXED: both teams get their own match points
             if (matchPointsA > matchPointsB) {
               t1.won++;
-              t1.points += matchPointsA;
               t2.lost++;
+
+              t1.points += matchPointsA;
+              t2.points += matchPointsB;
             } else if (matchPointsB > matchPointsA) {
               t2.won++;
-              t2.points += matchPointsB;
               t1.lost++;
+
+              t2.points += matchPointsB;
+              t1.points += matchPointsA;
             } else {
+              // true draw on match points
               t1.drawn++;
               t2.drawn++;
+
               t1.points += matchPointsA;
               t2.points += matchPointsB;
             }
