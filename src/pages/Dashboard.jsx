@@ -186,14 +186,7 @@ export default function Dashboard() {
       <button className="btn-primary">➕ Create New Tournament</button>
     </Link>
 	
-	//Create "Next Round" button
-  {activeTournament && (
-  <div className="dashboard-actions">
-    <button className="btn-primary" onClick={handleGenerateNextRound}>
-      Generate Next Round
-    </button>
-  </div>
-)}
+
 
 
 
@@ -231,6 +224,15 @@ export default function Dashboard() {
 							>
 							Rename
 			   </button>
+			   
+			   	//Create "Next Round" button
+  {activeTournament && (
+  <div className="dashboard-actions">
+    <button className="btn-primary" onClick={handleGenerateNextRound}>
+      Generate Next Round
+    </button>
+  </div>
+)}
 
 				<button
 					className="btn-secondary"
