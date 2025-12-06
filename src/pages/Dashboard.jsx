@@ -55,20 +55,7 @@ export default function Dashboard() {
   // Optionally ensure this is still the active tournament
   setActiveTournament(name);
   
-  //Create "Next Round" button
-  {activeTournament && (
-  <div className="dashboard-actions">
-    <button className="btn-primary" onClick={handleGenerateNextRound}>
-      Generate Next Round
-    </button>
-  </div>
-)}
-
-
-
-  // Go straight to Matches so they see the new round
-  window.location.href = "/matches";
-};
+  
 
 
   // Rename a tournament
@@ -156,6 +143,40 @@ export default function Dashboard() {
 
     setList(Object.keys(all));
   };
+  
+  const handleGenerateNextRound = () => {
+  const all = loadTournaments();
+  const name = getActiveTournament();
+
+  if (!name || !all[name]) {
+    alert("No active tournament selected.");
+    return;
+  }
+
+  const tournament = all[name];
+
+  const teams = tournament.tournament || [];
+  const matches = tournament.matches || [];
+  const scoringMethod = tournament.scoringMethod || "standard";
+
+  const nextRound = generateNextRound(teams, matches, scoringMethod);
+
+  if (!nextRound || nextRound.length === 0) {
+    alert("Could not generate a new round. There may be too few teams.");
+    return;
+  }
+
+  // Append the generated round
+  tournament.matches = [...matches, nextRound];
+  all[name] = tournament;
+
+  saveTournaments(all);
+  setActiveTournament(name);
+
+  // Redirect to Matches so user sees the new round
+  window.location.href = "/matches";
+};
+
 
  return (
   <div className="page">
@@ -164,6 +185,21 @@ export default function Dashboard() {
     <Link to="/new">
       <button className="btn-primary">➕ Create New Tournament</button>
     </Link>
+	
+	//Create "Next Round" button
+  {activeTournament && (
+  <div className="dashboard-actions">
+    <button className="btn-primary" onClick={handleGenerateNextRound}>
+      Generate Next Round
+    </button>
+  </div>
+)}
+
+
+
+  // Go straight to Matches so they see the new round
+  window.location.href = "/matches";
+};
 
     <h2>Saved Tournaments</h2>
 
