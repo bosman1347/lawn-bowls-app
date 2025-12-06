@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { generateNextRound } from "../utils/pairings";
+
 
 import {
   loadTournaments,
@@ -24,6 +26,49 @@ export default function Dashboard() {
     setActiveTournament(name);
     setActive(name);
   };
+  
+  //Generate next round
+  const handleGenerateNextRound = () => {
+  const all = loadTournaments();
+  const name = activeTournament; // or whatever state you use for the current one
+  if (!name || !all[name]) {
+    alert("No active tournament selected.");
+    return;
+  }
+
+  const t = all[name];
+  const teams = t.tournament || [];
+  const matches = t.matches || [];
+  const scoringMethod = t.scoringMethod || "standard";
+
+  const newRound = generateNextRound(teams, matches, scoringMethod);
+
+  if (!newRound || newRound.length === 0) {
+    alert("Could not generate a new round. Check that you have at least two teams.");
+    return;
+  }
+
+  t.matches = [...matches, newRound];
+  all[name] = t;
+  saveTournaments(all);
+
+  // Optionally ensure this is still the active tournament
+  setActiveTournament(name);
+  
+  //Create "Next Round" button
+  {activeTournament && (
+  <div className="dashboard-actions">
+    <button className="btn-primary" onClick={handleGenerateNextRound}>
+      Generate Next Round
+    </button>
+  </div>
+)}
+
+
+  // Go straight to Matches so they see the new round
+  window.location.href = "/matches";
+};
+
 
   // Rename a tournament
   const renameTournament = (oldName) => {
@@ -141,6 +186,7 @@ export default function Dashboard() {
 						>
 						Open
 			   </button>
+			   
 
 				<button
 					className="btn-secondary"
