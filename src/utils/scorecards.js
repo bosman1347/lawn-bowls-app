@@ -184,31 +184,30 @@ export async function buildScorecardsZipForRound(
   return zipBlob;
 }
 
-// A4: build a single PDF with four A6 cards per page (Option 3 behavior)
+// A4: TWO A6 CARDS PER LANDSCAPE PAGE (clean margins, no overlap)
 export async function buildScorecardsA4ForRound(
   tournamentName,
   roundIndex,
   roundMatches
 ) {
+  // Landscape A4: 297 x 210 mm
   const doc = new jsPDF({
-    orientation: "portrait",
+    orientation: "landscape",
     unit: "mm",
     format: "a4"
   });
 
   const roundNumber = roundIndex + 1;
 
-  const perPage = 4;
-  let cardIndex = 0;
-
+  // Two positions per landscape page
   const positions = [
-    { x: 0, y: 0 },               // top-left
-    { x: A6_WIDTH, y: 0 },        // top-right
-    { x: 0, y: A6_HEIGHT },       // bottom-left
-    { x: A6_WIDTH, y: A6_HEIGHT } // bottom-right
+    { x: 10, y: 10 },                           // Left card
+    { x: A6_WIDTH + 20, y: 10 }                 // Right card
   ];
 
-  // Draw one card per match
+  const perPage = 2;
+  let cardIndex = 0;
+
   for (let i = 0; i < roundMatches.length; i++) {
     const m = roundMatches[i];
     if (!m || !m.team1 || !m.team2) continue;
@@ -229,6 +228,24 @@ export async function buildScorecardsA4ForRound(
 
     cardIndex++;
   }
+
+  // If card count ends with only 1 used position, add a blank card
+  if (cardIndex > 0 && cardIndex % perPage === 1) {
+    const posIndex = 1;             // Right-hand position
+    const { x, y } = positions[posIndex];
+
+    drawScorecard(doc, x, y, {
+      tournamentName: "",
+      roundNumber: "",
+      green: "",
+      rink: ""
+    });
+  }
+
+  const pdfBlob = doc.output("blob");
+  return pdfBlob;
+}
+
 
   // Option 3: if last page not full, add ONE blank generic card
   if (cardIndex > 0 && cardIndex % perPage !== 0) {
