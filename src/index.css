@@ -955,6 +955,12 @@ button {
   font-weight: 600;
 }
 
+.match-location {
+  font-size: 1rem;
+  margin-bottom: 4px;
+  color: #0a572d;
+}
+
 
 
 
