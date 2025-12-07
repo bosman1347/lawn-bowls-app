@@ -209,13 +209,13 @@ export async function buildScorecardsZipForRound(
   return zipBlob;
 }
 
-// A4: TWO A6 CARDS PER LANDSCAPE PAGE (clean margins, no overlap)
+// A4: TWO A6 CARDS PER LANDSCAPE PAGE (correct dimensions)
 export async function buildScorecardsA4ForRound(
   tournamentName,
   roundIndex,
   roundMatches
 ) {
-  // Landscape A4: 297 x 210 mm
+  // True A4 landscape size: 297 x 210 mm
   const doc = new jsPDF({
     orientation: "landscape",
     unit: "mm",
@@ -224,27 +224,26 @@ export async function buildScorecardsA4ForRound(
 
   const roundNumber = roundIndex + 1;
 
-  // Two positions per landscape page
+  // Positions for 2 cards per page
   const positions = [
-    { x: 10, y: 10 },                // Left card
-    { x: A6_WIDTH + 20, y: 10 }      // Right card
+    { x: 10, y: 10 },                   // Left card
+    { x: 10 + A6_WIDTH + 10, y: 10 }    // Right card
   ];
 
-  const perPage = 2;
   let cardIndex = 0;
 
   for (let i = 0; i < roundMatches.length; i++) {
     const m = roundMatches[i];
     if (!m || !m.team1 || !m.team2) continue;
 
-    if (cardIndex > 0 && cardIndex % perPage === 0) {
+    // Add new page if starting a third card
+    if (cardIndex > 0 && cardIndex % 2 === 0) {
       doc.addPage();
     }
 
-    const posIndex = cardIndex % perPage;
-    const { x, y } = positions[posIndex];
+    const pos = positions[cardIndex % 2];
 
-    drawScorecard(doc, x, y, {
+    drawScorecard(doc, pos.x, pos.y, {
       tournamentName,
       roundNumber,
       green: m.green || "",
@@ -256,10 +255,10 @@ export async function buildScorecardsA4ForRound(
     cardIndex++;
   }
 
-  // If last page contains only one card: add a blank generic one
-  if (cardIndex > 0 && cardIndex % perPage === 1) {
-    const { x, y } = positions[1];
-    drawScorecard(doc, x, y, {
+  // If odd number of matches → add one blank scorecard
+  if (cardIndex % 2 === 1) {
+    const pos = positions[1];
+    drawScorecard(doc, pos.x, pos.y, {
       tournamentName: "",
       roundNumber: "",
       green: "",
@@ -268,6 +267,10 @@ export async function buildScorecardsA4ForRound(
       team2: ""
     });
   }
+
+  return doc.output("blob");
+}
+
 
   const pdfBlob = doc.output("blob");
   return pdfBlob;
