@@ -4,14 +4,16 @@ import {
   saveTournaments,
   getActiveTournament
 } from "../utils/storage";
+import { buildScorecardsZipForRound } from "../utils/scorecards";
 
 /*
  Matches.jsx
  - Supports Standard and Skins scoring
  - Debounced saves to storage
  - Highlights skins (win/draw)
- - Highlights completed matches
+ - Highlights completed + verified matches
  - Adds umpire verification with lock
+ - Adds "Download Scorecards" (15-end, portrait) for latest round
 */
 
 export default function Matches() {
@@ -32,7 +34,6 @@ export default function Matches() {
     if (data) {
       setTournamentName(name);
       setMatches(data.matches || []);
-      // tournament-level scoring type
       setScoringMode(data.scoringMethod || "standard");
     }
   }, []);
@@ -195,7 +196,6 @@ export default function Matches() {
           : round.map((m, mi) => {
               if (mi !== matchIndex) return m;
 
-              // determine completeness
               const isStandardComplete =
                 m.score1 != null && m.score2 != null;
               const isSkinsComplete =
@@ -208,7 +208,6 @@ export default function Matches() {
                   ? isStandardComplete
                   : isSkinsComplete;
 
-              // If trying to mark as verified but not complete
               if (!m.verified && !isComplete) {
                 alert(
                   "You can only verify a match once all scores or skins are fully entered."
@@ -216,7 +215,6 @@ export default function Matches() {
                 return m;
               }
 
-              // Toggle verified flag
               return { ...m, verified: !m.verified };
             })
       );
@@ -224,6 +222,47 @@ export default function Matches() {
       saveMatchesToStorage(next);
       return next;
     });
+  };
+
+  // Download scorecards ZIP for the latest round
+  const handleDownloadScorecards = async () => {
+    if (!tournamentName) {
+      alert("No active tournament.");
+      return;
+    }
+    if (!matches || matches.length === 0) {
+      alert("No rounds are available yet.");
+      return;
+    }
+
+    const roundIndex = matches.length - 1; // latest round
+    const roundMatches = matches[roundIndex];
+
+    if (!roundMatches || roundMatches.length === 0) {
+      alert("The latest round has no matches.");
+      return;
+    }
+
+    try {
+      const zipBlob = await buildScorecardsZipForRound(
+        tournamentName,
+        roundIndex,
+        roundMatches
+      );
+
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${tournamentName.replace(
+        /[^a-z0-9\-]+/gi,
+        "_"
+      )}_round_${roundIndex + 1}_scorecards.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Error building scorecards ZIP:", err);
+      alert("Could not generate scorecards. See console for details.");
+    }
   };
 
   if (!tournamentName) {
@@ -241,6 +280,14 @@ export default function Matches() {
       <p>
         Scoring Mode: <strong>{scoringMode}</strong>
       </p>
+
+      <button
+        className="btn-secondary"
+        style={{ marginBottom: "1rem" }}
+        onClick={handleDownloadScorecards}
+      >
+        Download Scorecards (PDF ZIP) for Latest Round
+      </button>
 
       {matches.map((round, rIndex) => (
         <div key={rIndex} className="round-block">
@@ -269,6 +316,13 @@ export default function Matches() {
 
             return (
               <div key={mIndex} className={matchCardClass}>
+                {/* Green & rink header */}
+                {m.green && m.rink != null && (
+                  <div className="match-location">
+                    <strong>🟩 Green {m.green} — Rink {m.rink}</strong>
+                  </div>
+                )}
+
                 <div className="match-header">
                   <h4>
                     {m.team1} vs {m.team2}
@@ -277,7 +331,9 @@ export default function Matches() {
                     {m.verified ? (
                       <span className="badge-verified">Verified ✓</span>
                     ) : isComplete ? (
-                      <span className="badge-pending">Complete — Not Verified</span>
+                      <span className="badge-pending">
+                        Complete — Not Verified
+                      </span>
                     ) : (
                       <span className="badge-incomplete">In Progress</span>
                     )}
