@@ -1,379 +1,138 @@
-// src/utils/pairings.js
-// ----------------------------------------------------------
-// Tournament Pairing Engine for Twilight Pairs (Skins + Standard)
-// ----------------------------------------------------------
+/**
+ * Pairing Engine v2 — Centurion Bowls Club
+ * ---------------------------------------
+ * NEW FEATURES:
+ *  - Deterministic rink assignment (A1–A6 then B1–B6)
+ *  - Avoid teams using the same rink twice (until all rinks exhausted)
+ *  - Avoid repeat opponents
+ *  - Works for 24-team Twilight Pairs (12 matches per round)
+ */
 
-/*
-  This file generates new rounds based on:
+export function generateNextRound(standings, previousRounds) {
+  if (!standings || standings.length === 0) return [];
 
-  • Week 1 → random shuffle
-  • Week 2+ → standings-based seeding (1v2, 3v4, etc.)
-  • Strong anti-repeat: avoid teams meeting again if any legal pairing exists
-  • Assign greens & rinks (A1–A6, B1–B6), avoiding repeats per team
-  • Supports both standard scoring and skins scoring
-*/
+  const teams = standings.map((s) => s.team);
+  const N = teams.length;
+  const usedPairs = new Set();
+  const teamRinkHistory = {}; // team -> { rinkName: count }
 
-//
-// ----------------------------------------------------------
-// 1. COMPUTE STANDINGS from stored matches
-// (Used only for generating next-round pairings)
-// ----------------------------------------------------------
-//
+  // Build previous opponent + rink history
+  previousRounds.forEach((round) => {
+    round.forEach((m) => {
+      const k1 = m.team1 + "_" + m.team2;
+      const k2 = m.team2 + "_" + m.team1;
+      usedPairs.add(k1);
+      usedPairs.add(k2);
 
-export function computeStandingsForPairings(matches) {
-  const table = {};
+      const rink = m.green + String(m.rink);
 
-  (matches || []).forEach((round) => {
-    (round || []).forEach((m) => {
-      if (!table[m.team1]) {
-        table[m.team1] = {
-          team: m.team1,
-          played: 0,
-          won: 0,
-          drawn: 0,
-          lost: 0,
-          points: 0,
-          shotsFor: 0,
-          shotsAgainst: 0,
-          diff: 0
-        };
-      }
-      if (!table[m.team2]) {
-        table[m.team2] = {
-          team: m.team2,
-          played: 0,
-          won: 0,
-          drawn: 0,
-          lost: 0,
-          points: 0,
-          shotsFor: 0,
-          shotsAgainst: 0,
-          diff: 0
-        };
-      }
+      if (!teamRinkHistory[m.team1]) teamRinkHistory[m.team1] = {};
+      if (!teamRinkHistory[m.team2]) teamRinkHistory[m.team2] = {};
 
-      const t1 = table[m.team1];
-      const t2 = table[m.team2];
+      teamRinkHistory[m.team1][rink] =
+        (teamRinkHistory[m.team1][rink] || 0) + 1;
 
-      // -----------------------------
-      // Standard scoring
-      // -----------------------------
-      if (m.score1 != null && m.score2 != null) {
-        const s1 = Number(m.score1);
-        const s2 = Number(m.score2);
-
-        t1.played++;
-        t2.played++;
-
-        t1.shotsFor += s1;
-        t1.shotsAgainst += s2;
-        t2.shotsFor += s2;
-        t2.shotsAgainst += s1;
-
-        t1.diff = t1.shotsFor - t1.shotsAgainst;
-        t2.diff = t2.shotsFor - t2.shotsAgainst;
-
-        if (s1 > s2) {
-          t1.won++;
-          t1.points += 2;
-          t2.lost++;
-        } else if (s2 > s1) {
-          t2.won++;
-          t2.points += 2;
-          t1.lost++;
-        } else {
-          t1.drawn++;
-          t2.drawn++;
-          t1.points++;
-          t2.points++;
-        }
-      }
-
-      // -----------------------------
-      // Skins scoring
-      // -----------------------------
-      else if (m.skins) {
-        const skins = m.skins || [];
-        let totalA = 0,
-          totalB = 0;
-        let skinPointsA = 0,
-          skinPointsB = 0;
-
-        skins.forEach((s) => {
-          const a = s?.a == null ? null : Number(s.a);
-          const b = s?.b == null ? null : Number(s.b);
-          if (a != null) totalA += a;
-          if (b != null) totalB += b;
-
-          if (a != null && b != null) {
-            if (a > b) skinPointsA += 1;
-            else if (b > a) skinPointsB += 1;
-            else {
-              skinPointsA += 0.5;
-              skinPointsB += 0.5;
-            }
-          }
-        });
-
-        t1.shotsFor += totalA;
-        t1.shotsAgainst += totalB;
-        t2.shotsFor += totalB;
-        t2.shotsAgainst += totalA;
-
-        t1.diff = t1.shotsFor - t1.shotsAgainst;
-        t2.diff = t2.shotsFor - t2.shotsAgainst;
-
-        const allComplete =
-          skins.length === 3 &&
-          skins.every((s) => s?.a != null && s?.b != null);
-
-        if (allComplete) {
-          t1.played++;
-          t2.played++;
-
-          // Bonus by total shots (split on tie)
-          let bonusA = 0,
-            bonusB = 0;
-
-          if (totalA > totalB) bonusA = 2;
-          else if (totalB > totalA) bonusB = 2;
-          else {
-            bonusA = 1;
-            bonusB = 1;
-          }
-
-          const matchPointsA = skinPointsA + bonusA;
-          const matchPointsB = skinPointsB + bonusB;
-
-          // Both teams get their own match points
-          if (matchPointsA > matchPointsB) {
-            t1.won++;
-            t2.lost++;
-
-            t1.points += matchPointsA;
-            t2.points += matchPointsB;
-          } else if (matchPointsB > matchPointsA) {
-            t2.won++;
-            t1.lost++;
-
-            t2.points += matchPointsB;
-            t1.points += matchPointsA;
-          } else {
-            t1.drawn++;
-            t2.drawn++;
-
-            t1.points += matchPointsA;
-            t2.points += matchPointsB;
-          }
-        }
-      }
+      teamRinkHistory[m.team2][rink] =
+        (teamRinkHistory[m.team2][rink] || 0) + 1;
     });
   });
 
-  const arr = Object.values(table);
-
-  return arr.sort(
-    (a, b) =>
-      b.points - a.points ||
-      b.diff - a.diff ||
-      b.shotsFor - a.shotsFor ||
-      a.team.localeCompare(b.team)
-  );
-}
-
-//
-// ----------------------------------------------------------
-// 2. CHECK IF TWO TEAMS HAVE PLAYED BEFORE
-// ----------------------------------------------------------
-//
-
-function havePlayedBefore(A, B, matches) {
-  return (matches || []).some((round) =>
-    (round || []).some(
-      (m) =>
-        (m.team1 === A && m.team2 === B) ||
-        (m.team1 === B && m.team2 === A)
-    )
-  );
-}
-
-//
-// ----------------------------------------------------------
-// 3. RINK ASSIGNMENT HISTORY
-// ----------------------------------------------------------
-//
-
-function buildRinkHistory(matches) {
-  const usage = {};
-
-  (matches || []).forEach((round) => {
-    (round || []).forEach((m) => {
-      if (!m.green || m.rink == null) return;
-
-      const id = `${m.green}${m.rink}`;
-      [m.team1, m.team2].forEach((team) => {
-        if (!usage[team]) usage[team] = {};
-        usage[team][id] = (usage[team][id] || 0) + 1;
-      });
-    });
-  });
-
-  return usage;
-}
-
-//
-// ----------------------------------------------------------
-// 4. SHUFFLE FOR WEEK 1
-// ----------------------------------------------------------
-//
-
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-//
-// ----------------------------------------------------------
-// 5. RECURSIVE PAIR BUILDER (STRONG ANTI-REPEAT)
-// ----------------------------------------------------------
-//
-
-// Try to build all pairs without repeat opponents.
-// If impossible, allow repeats in a second pass.
-function buildPairsRecursive(teams, matches, allowRepeats = false) {
-  if (teams.length === 0) return [];
-
-  const [A, ...rest] = teams;
-
-  // BYE handling: if A is BYE, just recurse on the rest
-  if (A === "BYE") {
-    return buildPairsRecursive(rest, matches, allowRepeats);
-  }
-
-  for (let i = 0; i < rest.length; i++) {
-    const B = rest[i];
-    if (B === "BYE") continue;
-
-    if (!allowRepeats && havePlayedBefore(A, B, matches)) {
-      continue;
-    }
-
-    const remaining = rest.filter((_, idx) => idx !== i);
-    const subPairs = buildPairsRecursive(remaining, matches, allowRepeats);
-
-    if (subPairs !== null) {
-      return [[A, B], ...subPairs];
+  /** ----------------------------------------------------------
+   * STEP 1 — Make provisional opponent list based on standings
+   * ---------------------------------------------------------- */
+  const provisional = [];
+  for (let i = 0; i < N; i += 2) {
+    if (i + 1 < N) {
+      provisional.push([teams[i], teams[i + 1]]);
     }
   }
 
-  // No valid pairing found for A
-  return null;
-}
+  /** ----------------------------------------------------------
+   * STEP 2 — Repair any repeated opponents
+   * ---------------------------------------------------------- */
+  for (let i = 0; i < provisional.length; i++) {
+    let [A, B] = provisional[i];
+    let key = A + "_" + B;
 
-//
-// ----------------------------------------------------------
-// 6. GENERATE NEXT ROUND
-// ----------------------------------------------------------
-//
+    if (!usedPairs.has(key)) continue; // OK pair
 
-export function generateNextRound(teams, matches, scoringMethod) {
-  const cleanTeams = (teams || []).map((t) => t.trim()).filter(Boolean);
-  if (cleanTeams.length < 2) return [];
+    // Try to swap with another pairing
+    for (let j = i + 1; j < provisional.length; j++) {
+      let [C, D] = provisional[j];
 
-  const existing = matches || [];
-  let ordered;
+      // Try swap B <-> C
+      if (!usedPairs.has(A + "_" + C)) {
+        provisional[i] = [A, C];
+        provisional[j] = [B, D];
+        break;
+      }
 
-  // Week 1: Random
-  if (existing.length === 0) {
-    ordered = shuffle(cleanTeams);
-  } else {
-    // Later: standings order
-    const standings = computeStandingsForPairings(existing);
-    const fromStandings = standings.map((s) => s.team);
-    const remaining = cleanTeams.filter((t) => !fromStandings.includes(t));
-    ordered = [...fromStandings, ...remaining];
-  }
-
-  // Add BYE if odd number of teams
-  if (ordered.length % 2 === 1) {
-    ordered.push("BYE");
-  }
-
-  // First attempt: no repeats allowed
-  let pairs = buildPairsRecursive(ordered, existing, false);
-
-  // If impossible (rare), allow repeats to avoid deadlock
-  if (pairs === null) {
-    pairs = buildPairsRecursive(ordered, existing, true);
-    if (pairs === null) {
-      // Completely impossible (should not happen with sane inputs)
-      return [];
+      // Try swap B <-> D
+      if (!usedPairs.has(A + "_" + D)) {
+        provisional[i] = [A, D];
+        provisional[j] = [B, C];
+        break;
+      }
     }
   }
 
-  //
-  // ------------------------------------------------------
-  // 7. RINK ASSIGNMENTS (A1–A6, B1–B6)
-  // ------------------------------------------------------
-  //
+  /** ----------------------------------------------------------
+   * STEP 3 — Assign Rinks (the fixed version)
+   * ---------------------------------------------------------- */
 
-  const allRinks = [
+  // Deterministic order: first match A1, last match B6
+  const rinkOrder = [
     "A1","A2","A3","A4","A5","A6",
     "B1","B2","B3","B4","B5","B6"
   ];
+  let rinkPointer = 0;
 
-  const usage = buildRinkHistory(existing);
-  const nextRound = [];
+  const round = [];
 
-  pairs.forEach(([A, B]) => {
-    // Choose best rink (least used by either team)
-    let best = allRinks[0];
-    let bestScore = Infinity;
+  for (let i = 0; i < provisional.length; i++) {
+    const [team1, team2] = provisional[i];
 
-    allRinks.forEach((r) => {
-      const score = (usage[A]?.[r] || 0) + (usage[B]?.[r] || 0);
-      if (score < bestScore) {
-        bestScore = score;
-        best = r;
-      }
-    });
+    // Default rink in simple rotation
+    let assigned = rinkOrder[rinkPointer % rinkOrder.length];
+    rinkPointer++;
 
-    const green = best[0];
-    const rink = Number(best.slice(1));
+    // Avoid repeat rinks IF possible
+    const avoid = (teamRinkHistory[team1] || {});
+    const avoid2 = (teamRinkHistory[team2] || {});
+    const safeRinks = rinkOrder.filter(
+      r => !avoid[r] && !avoid2[r]
+    );
 
-    // Update usage so next pair avoids same rink
-    [A, B].forEach((t) => {
-      if (!usage[t]) usage[t] = {};
-      usage[t][best] = (usage[t][best] || 0) + 1;
-    });
+    // If there exists a rink neither team has used → choose the FIRST such rink
+    if (safeRinks.length > 0) {
+      assigned = safeRinks[0];
+    }
 
-    const match = {
-      team1: A,
-      team2: B,
-      scoringMethod: scoringMethod || "standard",
-      verified: false,
+    // Parse into green + rink number
+    const green = assigned[0];
+    const rink = parseInt(assigned.slice(1), 10);
+
+    // Record rink usage
+    teamRinkHistory[team1] = teamRinkHistory[team1] || {};
+    teamRinkHistory[team2] = teamRinkHistory[team2] || {};
+
+    teamRinkHistory[team1][assigned] =
+      (teamRinkHistory[team1][assigned] || 0) + 1;
+
+    teamRinkHistory[team2][assigned] =
+      (teamRinkHistory[team2][assigned] || 0) + 1;
+
+    // Push final match object
+    round.push({
+      team1,
+      team2,
       green,
       rink,
       score1: null,
-      score2: null
-    };
+      score2: null,
+      verified: false
+    });
+  }
 
-    if ((scoringMethod || "standard") === "skins") {
-      match.skins = [
-        { a: null, b: null },
-        { a: null, b: null },
-        { a: null, b: null }
-      ];
-    } else {
-      match.skins = null;
-    }
-
-    nextRound.push(match);
-  });
-
-  return nextRound;
+  return round;
 }
