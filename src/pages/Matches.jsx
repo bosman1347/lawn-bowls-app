@@ -4,7 +4,11 @@ import {
   saveTournaments,
   getActiveTournament
 } from "../utils/storage";
-import { buildScorecardsZipForRound } from "../utils/scorecards";
+import {
+  buildScorecardsZipForRound,
+  buildScorecardsA4ForRound
+} from "../utils/scorecards";
+
 
 /*
  Matches.jsx
@@ -264,6 +268,47 @@ export default function Matches() {
       alert("Could not generate scorecards. See console for details.");
     }
   };
+  
+    const handleDownloadScorecardsA4 = async () => {
+    if (!tournamentName) {
+      alert("No active tournament.");
+      return;
+    }
+    if (!matches || matches.length === 0) {
+      alert("No rounds are available yet.");
+      return;
+    }
+
+    const roundIndex = matches.length - 1; // latest round
+    const roundMatches = matches[roundIndex];
+
+    if (!roundMatches || roundMatches.length === 0) {
+      alert("The latest round has no matches.");
+      return;
+    }
+
+    try {
+      const pdfBlob = await buildScorecardsA4ForRound(
+        tournamentName,
+        roundIndex,
+        roundMatches
+      );
+
+      const url = URL.createObjectURL(pdfBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${tournamentName.replace(
+        /[^a-z0-9\-]+/gi,
+        "_"
+      )}_round_${roundIndex + 1}_scorecards_A4.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Error building A4 scorecards PDF:", err);
+      alert("Could not generate A4 scorecards. See console for details.");
+    }
+  };
+
 
   if (!tournamentName) {
     return (
@@ -288,6 +333,23 @@ export default function Matches() {
       >
         Download Scorecards (PDF ZIP) for Latest Round
       </button>
+	  
+	  <button
+        className="btn-secondary"
+        style={{ marginBottom: "1rem", marginRight: "0.5rem" }}
+        onClick={handleDownloadScorecards}
+      >
+        Download Scorecards (A6 ZIP)
+      </button>
+
+      <button
+        className="btn-secondary"
+        style={{ marginBottom: "1rem" }}
+        onClick={handleDownloadScorecardsA4}
+      >
+        Download Scorecards (A4 — 4 per page)
+      </button>
+	  
 
       {matches.map((round, rIndex) => (
         <div key={rIndex} className="round-block">

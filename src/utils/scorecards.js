@@ -1,118 +1,148 @@
 // src/utils/scorecards.js
-// Generate portrait 15-end scorecards (3 skins of 5 ends) for a round of matches.
+// Scorecard generator for Centurion Bowls Club
+// - A6 portrait scorecards (one per PDF, zipped)
+// - A4 portrait sheets with four A6 cards per page
+// - 15 ends, 3 skins of 5 ends, 5x4 scoring grid per skin
 
 import jsPDF from "jspdf";
 import JSZip from "jszip";
 
-// Draw a single scorecard for one match
-function drawScorecard(doc, options) {
-  const {
-    tournamentName,
-    roundNumber,
-    green,
-    rink,
-    // team1,
-    // team2
-  } = options;
+const A6_WIDTH = 105;
+const A6_HEIGHT = 148.5;
 
-  const marginLeft = 15;
-  let y = 15;
+// Draw a single scorecard at a given origin (x0, y0) on any page size
+function drawScorecard(doc, x0, y0, options) {
+  const { tournamentName, roundNumber, green, rink } = options || {};
 
+  const cardWidth = A6_WIDTH;
+  const startX = x0 + 5;
+  let y = y0 + 10;
+  const centerX = x0 + cardWidth / 2;
+
+  // Header: logo space + club name
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text("Twilight Pairs Scorecard", marginLeft, y);
+  doc.setFontSize(10);
+  // Space for logo (just visual gap for now)
+  // (If you later add an image, place it here.)
+  doc.text("Centurion Bowls Club", centerX, y, { align: "center" });
+  y += 5;
+  doc.setFontSize(9);
+  doc.text("Scorecard", centerX, y, { align: "center" });
   y += 8;
 
-  doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
 
-  // Tournament + Round + Date
-  doc.text(`Tournament: ${tournamentName || "________________"}`, marginLeft, y);
-  y += 6;
-  doc.text(`Round: ${roundNumber}`, marginLeft, y);
-  doc.text("Date: ____________________", marginLeft + 60, y);
-  y += 8;
+  const tourLabel = tournamentName || "____________________________";
+  doc.text(`Tournament: ${tourLabel}`, startX, y);
+  y += 5;
 
-  // Green / Rink
+  doc.text(`Round: ${roundNumber || ""}`, startX, y);
+  doc.text("Date: ________________", startX + 45, y);
+  y += 5;
+
   doc.text(
-    `Green: ${green || "___"}    Rink: ${rink != null ? rink : "___"}`,
-    marginLeft,
+    `Green: ${green || "____"}   Rink: ${
+      rink != null ? rink : "____"
+    }`,
+    startX,
     y
   );
+  y += 6;
+
+  doc.text("Team 1: ________________________________", startX, y);
+  y += 5;
+  doc.text("Team 2: ________________________________", startX, y);
   y += 8;
 
-  // Teams (blank lines for names)
-  doc.text("Team 1: _______________________________", marginLeft, y);
-  y += 6;
-  doc.text("Team 2: _______________________________", marginLeft, y);
-  y += 10;
+  // Light grid style
+  doc.setDrawColor(180);
+  doc.setLineWidth(0.2);
 
-  const drawSkinBlock = (label, startEnd) => {
+  const rowHeight = 4.2;
+  const endColWidth = 8;
+  const totalWidth = 90;
+  const scoreColWidth = (totalWidth - endColWidth) / 4; // 4 scoring columns
+
+  const drawSkinTable = (label, startEnd) => {
+    // Skin label
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text(label, marginLeft, y);
-    y += 6;
+    doc.setFontSize(7);
+    doc.text(label, startX, y);
+    y += 4;
 
-    doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
 
-    // Table header
-    doc.text("End", marginLeft, y);
-    doc.text("AA S", marginLeft + 15, y);
-    doc.text("AA C", marginLeft + 30, y);
-    doc.text("HH S", marginLeft + 50, y);
-    doc.text("HH C", marginLeft + 65, y);
-    y += 5;
+    const tableX = startX;
+    let tableY = y;
 
-    // Lines for 5 ends
+    // 5 rows for ends
     for (let i = 0; i < 5; i++) {
       const endNo = startEnd + i;
-      doc.text(String(endNo).padStart(2, " "), marginLeft, y);
+      const rowY = tableY + i * rowHeight;
 
-      // just underscores for writing
-      doc.text("______", marginLeft + 15, y);
-      doc.text("______", marginLeft + 30, y);
-      doc.text("______", marginLeft + 50, y);
-      doc.text("______", marginLeft + 65, y);
+      // Draw 5 cells: [End][col1][col2][col3][col4]
+      let cellX = tableX;
 
-      y += 5;
+      // End number cell
+      doc.rect(cellX, rowY, endColWidth, rowHeight);
+      doc.text(String(endNo), cellX + 2, rowY + rowHeight - 1.2);
+
+      cellX += endColWidth;
+
+      // 4 scoring cells (blank)
+      for (let c = 0; c < 4; c++) {
+        doc.rect(cellX, rowY, scoreColWidth, rowHeight);
+        cellX += scoreColWidth;
+      }
     }
 
-    y += 3;
+    y = tableY + 5 * rowHeight + 4;
+
     // Subtotals
-    doc.text("Subtotal AA: ____________", marginLeft, y);
-    doc.text("Subtotal HH: ____________", marginLeft + 60, y);
+    doc.text("Team 1 Subtotal: ________________", startX, y);
+    y += 4;
+    doc.text("Team 2 Subtotal: ________________", startX, y);
     y += 6;
-    doc.text("Skin Winner:  AA / HH / Tie", marginLeft, y);
-    y += 10;
   };
 
-  // Skin 1: ends 1–5
-  drawSkinBlock("Skin 1 — Ends 1–5", 1);
-  // Skin 2: ends 6–10
-  drawSkinBlock("Skin 2 — Ends 6–10", 6);
-  // Skin 3: ends 11–15
-  drawSkinBlock("Skin 3 — Ends 11–15", 11);
+  // Skin 1 (Ends 1–5)
+  drawSkinTable("Skin 1 — Ends 1–5", 1);
+  // Skin 2 (Ends 6–10)
+  drawSkinTable("Skin 2 — Ends 6–10", 6);
+  // Skin 3 (Ends 11–15)
+  drawSkinTable("Skin 3 — Ends 11–15", 11);
 
+  // Final totals + signatures
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.text("FINAL TOTAL SHOTS", marginLeft, y);
-  y += 6;
+  doc.setFontSize(8);
+  doc.text("FINAL TOTAL SHOTS", startX, y);
+  y += 5;
 
   doc.setFont("helvetica", "normal");
-  doc.text("Team 1 Total: ____________", marginLeft, y);
+  doc.setFontSize(7);
+  doc.text("Team 1 Total: ____________________________", startX, y);
+  y += 4;
+  doc.text("Team 2 Total: ____________________________", startX, y);
   y += 6;
-  doc.text("Team 2 Total: ____________", marginLeft, y);
-  y += 10;
 
-  doc.text("AA Captain Signature: ___________________________", marginLeft, y);
-  y += 7;
-  doc.text("HH Captain Signature: ___________________________", marginLeft, y);
-  y += 7;
-  doc.text("Umpire Signature: _______________________________", marginLeft, y);
+  doc.text(
+    "Captain Signature (Team 1): ____________________________",
+    startX,
+    y
+  );
+  y += 5;
+  doc.text(
+    "Captain Signature (Team 2): ____________________________",
+    startX,
+    y
+  );
+  y += 5;
+  doc.text("Umpire Signature: ________________________________", startX, y);
 }
 
-// Build a ZIP of scorecards for one round
+// A6: build a ZIP of one A6-per-PDF scorecards for a round
 export async function buildScorecardsZipForRound(
   tournamentName,
   roundIndex,
@@ -120,37 +150,107 @@ export async function buildScorecardsZipForRound(
 ) {
   const zip = new JSZip();
   const safeName =
-    (tournamentName || "tournament").replace(/[^a-z0-9\-]+/gi, "_") || "tournament";
+    (tournamentName || "tournament").replace(/[^a-z0-9\-]+/gi, "_") ||
+    "tournament";
   const roundNumber = roundIndex + 1;
 
   for (let i = 0; i < roundMatches.length; i++) {
     const m = roundMatches[i];
-    // Skip weird internal or bye-like matches if any ever appear
     if (!m || !m.team1 || !m.team2) continue;
 
     const doc = new jsPDF({
       orientation: "portrait",
       unit: "mm",
-      format: "a4"
+      format: [A6_WIDTH, A6_HEIGHT]
     });
 
-    drawScorecard(doc, {
+    drawScorecard(doc, 0, 0, {
       tournamentName,
       roundNumber,
       green: m.green || "",
       rink: m.rink
-      // We leave team names blank on the card for handwriting.
     });
 
-    const pdfBlob = doc.output("blob");
+    const pdfArrayBuf = doc.output("arraybuffer");
 
     const fileName = `${safeName}_R${roundNumber}_Rink_${m.green || "X"}${
       m.rink != null ? m.rink : "?"
     }.pdf`;
 
-    zip.file(fileName, pdfBlob);
+    zip.file(fileName, pdfArrayBuf);
   }
 
   const zipBlob = await zip.generateAsync({ type: "blob" });
   return zipBlob;
+}
+
+// A4: build a single PDF with four A6 cards per page (Option 3 behavior)
+export async function buildScorecardsA4ForRound(
+  tournamentName,
+  roundIndex,
+  roundMatches
+) {
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4"
+  });
+
+  const roundNumber = roundIndex + 1;
+
+  const perPage = 4;
+  let cardIndex = 0;
+
+  const positions = [
+    { x: 0, y: 0 },               // top-left
+    { x: A6_WIDTH, y: 0 },        // top-right
+    { x: 0, y: A6_HEIGHT },       // bottom-left
+    { x: A6_WIDTH, y: A6_HEIGHT } // bottom-right
+  ];
+
+  // Draw one card per match
+  for (let i = 0; i < roundMatches.length; i++) {
+    const m = roundMatches[i];
+    if (!m || !m.team1 || !m.team2) continue;
+
+    if (cardIndex > 0 && cardIndex % perPage === 0) {
+      doc.addPage();
+    }
+
+    const posIndex = cardIndex % perPage;
+    const { x, y } = positions[posIndex];
+
+    drawScorecard(doc, x, y, {
+      tournamentName,
+      roundNumber,
+      green: m.green || "",
+      rink: m.rink
+    });
+
+    cardIndex++;
+  }
+
+  // Option 3: if last page not full, add ONE blank generic card
+  if (cardIndex > 0 && cardIndex % perPage !== 0) {
+    if (cardIndex % perPage !== 0) {
+      if (cardIndex % perPage === 0) {
+        // full page - do nothing
+      } else {
+        const posIndex = cardIndex % perPage;
+        if (posIndex === 0) {
+          doc.addPage();
+        }
+        const { x, y } = positions[posIndex];
+        drawScorecard(doc, x, y, {
+          tournamentName: "",
+          roundNumber: "",
+          green: "",
+          rink: ""
+        });
+      }
+    }
+  }
+
+  const pdfBlob = doc.output("blob");
+  return pdfBlob;
 }
