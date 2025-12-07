@@ -269,5 +269,5 @@ export async function buildScorecardsA4ForRound(
   }
 
   const pdfBlob = doc.output("blob");
-  return pdfBlob;
+  //return pdfBlob;
 }
