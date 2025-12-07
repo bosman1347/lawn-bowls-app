@@ -15,6 +15,12 @@ export default function NewTournament() {
   // Update team count
   const handleNumTeamsChange = (e) => {
     const value = parseInt(e.target.value, 10);
+    if (Number.isNaN(value) || value < 2) {
+      setNumTeams(2);
+      setTeams(teams.slice(0, 2));
+      return;
+    }
+
     setNumTeams(value);
 
     if (value > teams.length) {
@@ -31,7 +37,7 @@ export default function NewTournament() {
     setTeams(updated);
   };
 
-  // Create tournament
+  // Create tournament (no fixtures yet – Twilight engine will generate rounds)
   const createTournament = () => {
     if (!name.trim()) {
       alert("Please enter a tournament name");
@@ -44,60 +50,29 @@ export default function NewTournament() {
       return;
     }
 
-    // Generate round robin fixtures
-    const rounds = [];
-    const list = [...trimmedTeams];
+    const all = loadTournaments();
 
-    // Add BYE if odd
-    if (list.length % 2 === 1) list.push("BYE");
-
-    const totalTeams = list.length;
-    const half = totalTeams / 2;
-
-    for (let r = 0; r < totalTeams - 1; r++) {
-      const round = [];
-
-      for (let i = 0; i < half; i++) {
-        const t1 = list[i];
-        const t2 = list[totalTeams - 1 - i];
-
-        if (t1 !== "BYE" && t2 !== "BYE") {
-          round.push({
-            team1: t1,
-            team2: t2,
-            scoringMethod,
-            score1: null,
-            score2: null,
-            skins: [
-              { a: null, b: null },
-              { a: null, b: null },
-              { a: null, b: null }
-            ]
-          });
-        }
-      }
-
-      rounds.push(round);
-
-      // Rotation except first
-      const fixed = list.shift();
-      const last = list.pop();
-      list.unshift(fixed);
-      list.splice(1, 0, last);
+    if (all[name]) {
+      const overwrite = window.confirm(
+        `A tournament called "${name}" already exists. Overwrite it?`
+      );
+      if (!overwrite) return;
     }
 
-    const all = loadTournaments();
     all[name] = {
-      tournament: trimmedTeams,
-      scoringMethod,
-      matches: rounds,
+      name,
+      numTeams: trimmedTeams.length,
+      tournament: trimmedTeams,   // team list
+      scoringMethod,              // "standard" or "skins"
+      matches: [],                // IMPORTANT: no rounds yet
       results: {}
     };
 
     saveTournaments(all);
     setActiveTournament(name);
 
-    window.location.href = "/matches";
+    // Go to dashboard so you can click "Generate Next Round"
+    window.location.href = "/dashboard";
   };
 
   return (
