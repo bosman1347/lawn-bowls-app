@@ -8,7 +8,7 @@
 
   • Week 1 → random shuffle
   • Week 2+ → standings-based seeding (1v2, 3v4, etc.)
-  • Avoid repeat opponents whenever possible
+  • Strong anti-repeat: avoid teams meeting again if any legal pairing exists
   • Assign greens & rinks (A1–A6, B1–B6), avoiding repeats per team
   • Supports both standard scoring and skins scoring
 */
@@ -115,7 +115,6 @@ export function computeStandingsForPairings(matches) {
           }
         });
 
-        // shots accumulated even if incomplete
         t1.shotsFor += totalA;
         t1.shotsAgainst += totalB;
         t2.shotsFor += totalB;
@@ -138,12 +137,15 @@ export function computeStandingsForPairings(matches) {
 
           if (totalA > totalB) bonusA = 2;
           else if (totalB > totalA) bonusB = 2;
-          else (bonusA = bonusB = 1);
+          else {
+            bonusA = 1;
+            bonusB = 1;
+          }
 
           const matchPointsA = skinPointsA + bonusA;
           const matchPointsB = skinPointsB + bonusB;
 
-          // Winner gets win; loser gets loss — BUT both get their match points
+          // Both teams get their own match points
           if (matchPointsA > matchPointsB) {
             t1.won++;
             t2.lost++;
@@ -170,7 +172,6 @@ export function computeStandingsForPairings(matches) {
 
   const arr = Object.values(table);
 
-  // Order by points, diff, shotsFor, name
   return arr.sort(
     (a, b) =>
       b.points - a.points ||
@@ -237,7 +238,45 @@ function shuffle(arr) {
 
 //
 // ----------------------------------------------------------
-// 5. GENERATE NEXT ROUND
+// 5. RECURSIVE PAIR BUILDER (STRONG ANTI-REPEAT)
+// ----------------------------------------------------------
+//
+
+// Try to build all pairs without repeat opponents.
+// If impossible, allow repeats in a second pass.
+function buildPairsRecursive(teams, matches, allowRepeats = false) {
+  if (teams.length === 0) return [];
+
+  const [A, ...rest] = teams;
+
+  // BYE handling: if A is BYE, just recurse on the rest
+  if (A === "BYE") {
+    return buildPairsRecursive(rest, matches, allowRepeats);
+  }
+
+  for (let i = 0; i < rest.length; i++) {
+    const B = rest[i];
+    if (B === "BYE") continue;
+
+    if (!allowRepeats && havePlayedBefore(A, B, matches)) {
+      continue;
+    }
+
+    const remaining = rest.filter((_, idx) => idx !== i);
+    const subPairs = buildPairsRecursive(remaining, matches, allowRepeats);
+
+    if (subPairs !== null) {
+      return [[A, B], ...subPairs];
+    }
+  }
+
+  // No valid pairing found for A
+  return null;
+}
+
+//
+// ----------------------------------------------------------
+// 6. GENERATE NEXT ROUND
 // ----------------------------------------------------------
 //
 
@@ -264,41 +303,21 @@ export function generateNextRound(teams, matches, scoringMethod) {
     ordered.push("BYE");
   }
 
-  const unpaired = [...ordered];
-  const pairs = [];
+  // First attempt: no repeats allowed
+  let pairs = buildPairsRecursive(ordered, existing, false);
 
-  // ------------------------------------------------------
-  // Build pairs while avoiding repeat opponents
-  // ------------------------------------------------------
-  while (unpaired.length > 1) {
-    const A = unpaired.shift();
-    if (A === "BYE") continue;
-
-    let index = -1;
-
-    // Find someone A hasn’t played yet
-    for (let i = 0; i < unpaired.length; i++) {
-      const B = unpaired[i];
-      if (B === "BYE") continue;
-      if (!havePlayedBefore(A, B, existing)) {
-        index = i;
-        break;
-      }
+  // If impossible (rare), allow repeats to avoid deadlock
+  if (pairs === null) {
+    pairs = buildPairsRecursive(ordered, existing, true);
+    if (pairs === null) {
+      // Completely impossible (should not happen with sane inputs)
+      return [];
     }
-
-    // If everyone was already played, pair with first valid team
-    if (index === -1) {
-      index = unpaired.findIndex((t) => t !== "BYE");
-      if (index === -1) continue; // Only BYE left
-    }
-
-    const B = unpaired.splice(index, 1)[0];
-    pairs.push([A, B]);
   }
 
   //
   // ------------------------------------------------------
-  // 6. RINK ASSIGNMENTS (A1–A6, B1–B6)
+  // 7. RINK ASSIGNMENTS (A1–A6, B1–B6)
   // ------------------------------------------------------
   //
 
@@ -332,7 +351,6 @@ export function generateNextRound(teams, matches, scoringMethod) {
       usage[t][best] = (usage[t][best] || 0) + 1;
     });
 
-    // Build match object
     const match = {
       team1: A,
       team2: B,
