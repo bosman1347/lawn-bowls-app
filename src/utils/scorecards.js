@@ -247,27 +247,4 @@ export async function buildScorecardsA4ForRound(
 }
 
 
-  // Option 3: if last page not full, add ONE blank generic card
-  if (cardIndex > 0 && cardIndex % perPage !== 0) {
-    if (cardIndex % perPage !== 0) {
-      if (cardIndex % perPage === 0) {
-        // full page - do nothing
-      } else {
-        const posIndex = cardIndex % perPage;
-        if (posIndex === 0) {
-          doc.addPage();
-        }
-        const { x, y } = positions[posIndex];
-        drawScorecard(doc, x, y, {
-          tournamentName: "",
-          roundNumber: "",
-          green: "",
-          rink: ""
-        });
-      }
-    }
-  }
-
-  const pdfBlob = doc.output("blob");
-  //return pdfBlob;
-}
+  
