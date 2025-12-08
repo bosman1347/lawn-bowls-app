@@ -13,7 +13,7 @@ export default function Dashboard() {
   const [list, setList] = useState([]);
   const [active, setActive] = useState(null);
 
-  // Load tournament list on page load
+  // Load tournaments on start
   useEffect(() => {
     const all = loadTournaments();
     setList(Object.keys(all));
@@ -26,7 +26,7 @@ export default function Dashboard() {
     setActive(name);
   };
 
-  // Rename a tournament
+  // Rename tournament
   const renameTournament = (oldName) => {
     const newName = window.prompt("Enter a new name:", oldName);
     if (!newName) return;
@@ -57,30 +57,25 @@ export default function Dashboard() {
     setList(Object.keys(all));
   };
 
-  // Duplicate a tournament
+  // Duplicate tournament
   const duplicateTournament = (name) => {
     const all = loadTournaments();
     const original = all[name];
+    if (!original) return;
 
-    if (!original) {
-      alert("Tournament not found");
-      return;
-    }
-
-    let newName = name + " (copy)";
+    let newName = `${name} (copy)`;
     let counter = 2;
     while (all[newName]) {
-      newName = name + " (copy " + counter + ")";
+      newName = `${name} (copy ${counter})`;
       counter++;
     }
 
     const copy = {
       name: newName,
-      numTeams: original.numTeams,
-      tournament: [...original.tournament],
-      created: new Date().toISOString(),
+      teams: [...original.teams],
+      scoringMethod: original.scoringMethod,
       matches: JSON.parse(JSON.stringify(original.matches)),
-      scoringMethod: original.scoringMethod
+      results: {}
     };
 
     all[newName] = copy;
@@ -91,7 +86,7 @@ export default function Dashboard() {
     setList(Object.keys(all));
   };
 
-  // Delete a tournament
+  // Delete tournament
   const deleteTournament = (name) => {
     if (!window.confirm(`Delete tournament "${name}" permanently?`)) return;
 
@@ -107,7 +102,7 @@ export default function Dashboard() {
     setList(Object.keys(all));
   };
 
-  // Generate next round
+  // Generate next round using the standings
   const handleGenerateNextRound = () => {
     const all = loadTournaments();
     const name = getActiveTournament();
@@ -119,24 +114,22 @@ export default function Dashboard() {
 
     const tournament = all[name];
 
-    const teams = tournament.tournament || [];
-    const matches = tournament.matches || [];
-    const scoringMethod = tournament.scoringMethod || "standard";
+    const standings = tournament.teams.map(t => ({ team: t }));
+    const previousRounds = tournament.matches || [];
 
-    const nextRound = generateNextRound(teams, matches, scoringMethod);
+    const nextRound = generateNextRound(standings, previousRounds);
 
     if (!nextRound || nextRound.length === 0) {
-      alert("Could not generate a new round. There may be too few teams.");
+      alert("Could not generate new round.");
       return;
     }
 
-    tournament.matches = [...matches, nextRound];
+    tournament.matches = [...previousRounds, nextRound];
     all[name] = tournament;
 
     saveTournaments(all);
-    setActiveTournament(name);
 
-    // Redirect to Matches page
+    // Go to Matches
     window.location.href = "/matches";
   };
 
