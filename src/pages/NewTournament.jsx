@@ -1,5 +1,4 @@
 import { useState } from "react";
-
 import {
   loadTournaments,
   saveTournaments,
@@ -12,67 +11,70 @@ export default function NewTournament() {
   const [teams, setTeams] = useState(["", "", "", ""]);
   const [scoringMethod, setScoringMethod] = useState("standard");
 
-  // Update team count
+  // Keep teams array in sync with numTeams
   const handleNumTeamsChange = (e) => {
     const value = parseInt(e.target.value, 10);
     if (Number.isNaN(value) || value < 2) {
       setNumTeams(2);
-      setTeams(teams.slice(0, 2));
+      setTeams((prev) => prev.slice(0, 2));
       return;
     }
 
     setNumTeams(value);
 
-    if (value > teams.length) {
-      setTeams([...teams, ...Array(value - teams.length).fill("")]);
-    } else {
-      setTeams(teams.slice(0, value));
-    }
+    setTeams((prev) => {
+      if (value > prev.length) {
+        return [...prev, ...Array(value - prev.length).fill("")];
+      } else {
+        return prev.slice(0, value);
+      }
+    });
   };
 
-  // Update team name
   const updateTeamName = (index, value) => {
-    const updated = [...teams];
-    updated[index] = value;
-    setTeams(updated);
+    setTeams((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
   };
 
-  // Create tournament (no fixtures yet – Twilight engine will generate rounds)
   const createTournament = () => {
-    if (!name.trim()) {
-      alert("Please enter a tournament name");
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      alert("Please enter a tournament name.");
       return;
     }
 
     const trimmedTeams = teams.map((t) => t.trim()).filter(Boolean);
     if (trimmedTeams.length < 2) {
-      alert("Please enter at least 2 team names");
+      alert("Please enter at least 2 team names.");
       return;
     }
 
     const all = loadTournaments();
 
-    if (all[name]) {
+    if (all[trimmedName]) {
       const overwrite = window.confirm(
-        `A tournament called "${name}" already exists. Overwrite it?`
+        `A tournament called "${trimmedName}" already exists. Overwrite it?`
       );
       if (!overwrite) return;
     }
 
-    all[name] = {
-      name,
-      numTeams: trimmedTeams.length,
-      tournament: trimmedTeams,   // team list
-      scoringMethod,              // "standard" or "skins"
-      matches: [],                // IMPORTANT: no rounds yet
-      results: {}
+    // ✅ Unified tournament shape (Option A)
+    all[trimmedName] = {
+      name: trimmedName,
+      teams: trimmedTeams,          // <— team list here
+      scoringMethod,                // "standard" or "skins"
+      matches: [],                  // rounds will be generated later
+      results: {}                   // reserved for future use
     };
 
     saveTournaments(all);
-    setActiveTournament(name);
+    setActiveTournament(trimmedName);
 
-    // Go to dashboard so you can click "Generate Next Round"
-    window.location.href = "/dashboard";
+    // Go back to Dashboard (home page)
+    window.location.href = "/";
   };
 
   return (
@@ -107,7 +109,7 @@ export default function NewTournament() {
           value={scoringMethod}
           onChange={(e) => setScoringMethod(e.target.value)}
         >
-          <option value="standard">Standard (Total Shots)</option>
+          <option value="standard">Standard (total shots)</option>
           <option value="skins">Skins (3 × 5 ends)</option>
         </select>
       </div>
