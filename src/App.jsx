@@ -1,6 +1,9 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import NewTournament from "./pages/NewTournament";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Dashboard from "./pages/Dashboard";
+import NewTournament from "./pages/NewTournament";
 import Matches from "./pages/Matches";
 import Standings from "./pages/Standings";
 import Summary from "./pages/Summary";
@@ -11,7 +14,9 @@ export default function App() {
     <Router>
       <Navbar />
       <Routes>
-	    <Route path="/" element={<Dashboard />} />
+        {/* HOME PAGE FIX */}
+        <Route path="/" element={<Dashboard />} />
+
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/tournaments" element={<Dashboard />} />
         <Route path="/new" element={<NewTournament />} />
