@@ -271,3 +271,7 @@ export async function buildScorecardsA4ForRound(
   return doc.output("blob");
 }
 
+
+  const pdfBlob = doc.output("blob");
+  
+}
