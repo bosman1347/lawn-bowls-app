@@ -1,9 +1,9 @@
 /**
  * Pairing Engine v2 — Centurion Bowls Club
  * ---------------------------------------
- * NEW FEATURES:
+ * FEATURES:
  *  - Deterministic rink assignment (A1–A6 then B1–B6)
- *  - Avoid teams using the same rink twice (until all rinks exhausted)
+ *  - Avoid teams using the same rink twice (once they have history)
  *  - Avoid repeat opponents
  *  - Works for 24-team Twilight Pairs (12 matches per round)
  */
@@ -24,22 +24,20 @@ export function generateNextRound(standings, previousRounds) {
       usedPairs.add(k1);
       usedPairs.add(k2);
 
-      const rink = m.green + String(m.rink);
+      const rinkName = m.green + String(m.rink);
 
       if (!teamRinkHistory[m.team1]) teamRinkHistory[m.team1] = {};
       if (!teamRinkHistory[m.team2]) teamRinkHistory[m.team2] = {};
 
-      teamRinkHistory[m.team1][rink] =
-        (teamRinkHistory[m.team1][rink] || 0) + 1;
+      teamRinkHistory[m.team1][rinkName] =
+        (teamRinkHistory[m.team1][rinkName] || 0) + 1;
 
-      teamRinkHistory[m.team2][rink] =
-        (teamRinkHistory[m.team2][rink] || 0) + 1;
+      teamRinkHistory[m.team2][rinkName] =
+        (teamRinkHistory[m.team2][rinkName] || 0) + 1;
     });
   });
 
-  /** ----------------------------------------------------------
-   * STEP 1 — Make provisional opponent list based on standings
-   * ---------------------------------------------------------- */
+  /** STEP 1 — provisional pairings by standings */
   const provisional = [];
   for (let i = 0; i < N; i += 2) {
     if (i + 1 < N) {
@@ -47,9 +45,7 @@ export function generateNextRound(standings, previousRounds) {
     }
   }
 
-  /** ----------------------------------------------------------
-   * STEP 2 — Repair any repeated opponents
-   * ---------------------------------------------------------- */
+  /** STEP 2 — repair any repeated opponents */
   for (let i = 0; i < provisional.length; i++) {
     let [A, B] = provisional[i];
     let key = A + "_" + B;
@@ -76,11 +72,8 @@ export function generateNextRound(standings, previousRounds) {
     }
   }
 
-  /** ----------------------------------------------------------
-   * STEP 3 — Assign Rinks (the fixed version)
-   * ---------------------------------------------------------- */
+  /** STEP 3 — Assign rinks */
 
-  // Deterministic order: first match A1, last match B6
   const rinkOrder = [
     "A1","A2","A3","A4","A5","A6",
     "B1","B2","B3","B4","B5","B6"
@@ -92,37 +85,39 @@ export function generateNextRound(standings, previousRounds) {
   for (let i = 0; i < provisional.length; i++) {
     const [team1, team2] = provisional[i];
 
-    // Default rink in simple rotation
+    // Default rink in simple rotation (A1..A6,B1..B6)
     let assigned = rinkOrder[rinkPointer % rinkOrder.length];
     rinkPointer++;
 
-    // Avoid repeat rinks IF possible
-    const avoid = (teamRinkHistory[team1] || {});
-    const avoid2 = (teamRinkHistory[team2] || {});
-    const safeRinks = rinkOrder.filter(
-      r => !avoid[r] && !avoid2[r]
-    );
+    // Only try to avoid repeat rinks if either team has history
+    const avoid = teamRinkHistory[team1] || {};
+    const avoid2 = teamRinkHistory[team2] || {};
+    const hasHistory =
+      Object.keys(avoid).length > 0 || Object.keys(avoid2).length > 0;
 
-    // If there exists a rink neither team has used → choose the FIRST such rink
-    if (safeRinks.length > 0) {
-      assigned = safeRinks[0];
+    if (hasHistory) {
+      const safeRinks = rinkOrder.filter(
+        (r) => !avoid[r] && !avoid2[r]
+      );
+
+      if (safeRinks.length > 0) {
+        assigned = safeRinks[0];
+      }
     }
 
-    // Parse into green + rink number
     const green = assigned[0];
     const rink = parseInt(assigned.slice(1), 10);
 
-    // Record rink usage
+    // Record rink usage for future rounds
+    const rinkName = assigned;
     teamRinkHistory[team1] = teamRinkHistory[team1] || {};
     teamRinkHistory[team2] = teamRinkHistory[team2] || {};
 
-    teamRinkHistory[team1][assigned] =
-      (teamRinkHistory[team1][assigned] || 0) + 1;
+    teamRinkHistory[team1][rinkName] =
+      (teamRinkHistory[team1][rinkName] || 0) + 1;
+    teamRinkHistory[team2][rinkName] =
+      (teamRinkHistory[team2][rinkName] || 0) + 1;
 
-    teamRinkHistory[team2][assigned] =
-      (teamRinkHistory[team2][assigned] || 0) + 1;
-
-    // Push final match object
     round.push({
       team1,
       team2,
