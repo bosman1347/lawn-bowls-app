@@ -22,7 +22,7 @@ export default function Matches() {
     if (data) {
       setTournamentName(name);
       setRounds(data.matches || []);
-      setScoringMethod(data.scoring || "standard");
+      setScoringMethod(data.scoringMethod || "standard");
     }
   }, []);
 
