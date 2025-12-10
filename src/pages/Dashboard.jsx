@@ -153,8 +153,7 @@ export default function Dashboard() {
 
       <h2 style={{ marginTop: "2rem" }}>Saved Tournaments</h2>
 
-      {list.length === 0 ? (
-        {list.length === 0 ? (
+{list.length === 0 ? (
   <p>No tournaments created yet.</p>
 ) : (
   <div className="tournament-row">
@@ -200,4 +199,5 @@ export default function Dashboard() {
     ))}
   </div>
 )}
+
 
