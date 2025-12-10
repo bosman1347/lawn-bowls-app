@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { generateNextRound } from "../utils/pairings";
+import { computeStandings } from "../utils/standings";
 
 import {
   loadTournaments,
@@ -103,31 +104,32 @@ export default function Dashboard() {
   };
 
   // Generate next round using the standings
-  const handleGenerateNextRound = () => {
-    const all = loadTournaments();
-    const name = getActiveTournament();
+ const handleGenerateNextRound = () => {
+  const all = loadTournaments();
+  const name = getActiveTournament();
 
-    if (!name || !all[name]) {
-      alert("No active tournament selected.");
-      return;
-    }
+  if (!name || !all[name]) {
+    alert("No active tournament selected.");
+    return;
+  }
 
-    const tournament = all[name];
+  const tournament = all[name];
 
-    const standings = tournament.teams.map(t => ({ team: t }));
-    const previousRounds = tournament.matches || [];
+  const previousRounds = tournament.matches || [];
+  const standings = computeStandings(previousRounds);
 
-    const nextRound = generateNextRound(standings, previousRounds);
+  const nextRound = generateNextRound(standings, previousRounds);
 
-    if (!nextRound || nextRound.length === 0) {
-      alert("Could not generate new round.");
-      return;
-    }
+  if (!nextRound || nextRound.length === 0) {
+    alert("Could not generate new round.");
+    return;
+  }
 
-    tournament.matches = [...previousRounds, nextRound];
-    all[name] = tournament;
+  tournament.matches = [...previousRounds, nextRound];
+  all[name] = tournament;
+  saveTournaments(all);
+};
 
-    saveTournaments(all);
 
     // Go to Matches
     window.location.href = "/matches";
