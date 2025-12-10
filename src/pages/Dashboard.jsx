@@ -8,8 +8,8 @@ import {
   setActiveTournament,
 } from "../utils/storage";
 
-import { generateNextRound } from "../utils/pairings";
-import { computeStandings } from "../utils/standings";
+import { generateNextRound } from "../utils/pairings.js";
+import { computeStandings } from "../utils/standings.js";
 
 export default function Dashboard() {
   const [list, setList] = useState([]);
