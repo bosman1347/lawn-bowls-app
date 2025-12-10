@@ -9,6 +9,8 @@
  */
 
 export function generateNextRound(standings, previousRounds) {
+  console.log("PAIRINGS DEBUG — previousRounds:", previousRounds);
+  
   if (!standings || standings.length === 0) return [];
 
   const teams = standings.map((s) => s.team);
@@ -107,6 +109,16 @@ export function generateNextRound(standings, previousRounds) {
 
     const green = assigned[0];
     const rink = parseInt(assigned.slice(1), 10);
+	
+	//Pairings DEBUG
+	console.log(
+	"PAIRINGS DEBUG — history for",
+	team1,
+	team2,
+	teamRinkHistory[team1],
+	teamRinkHistory[team2]
+);
+
 
     // Record rink usage for future rounds
     const rinkName = assigned;
