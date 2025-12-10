@@ -87,8 +87,19 @@ export default function Dashboard() {
     const tournament = all[name];
     const previousRounds = tournament.matches || [];
 
-    const standings = computeStandings(previousRounds);
-    const nextRound = generateNextRound(standings, previousRounds);
+   let standings;
+
+if (previousRounds.length === 0) {
+  // Round 1 — no standings yet
+  standings = tournament.teams.map((t) => ({ team: t }));
+} else {
+  // Round 2+ — use real standings
+  standings = computeStandings(previousRounds);
+}
+
+
+const nextRound = generateNextRound(standings, previousRounds);
+
 
     if (!nextRound || nextRound.length === 0) {
       alert("Could not generate new round.");
