@@ -1,145 +1,185 @@
-/**
- * Pairing Engine v2 — Centurion Bowls Club
- * ---------------------------------------
- * FEATURES:
- *  - Deterministic rink assignment (A1–A6 then B1–B6)
- *  - Avoid teams using the same rink twice (once they have history)
- *  - Avoid repeat opponents
- *  - Works for 24-team Twilight Pairs (12 matches per round)
- */
+// src/utils/pairings.js
 
+/**
+ * Generate the next round of pairings.
+ *
+ * standings: [{ team, points?, diff? }, ...]
+ * previousRounds: [
+ *   [
+ *     { team1, team2, green, rink, ... },
+ *     ...
+ *   ],
+ *   ...
+ * ]
+ */
 export function generateNextRound(standings, previousRounds) {
   console.log("PAIRINGS DEBUG — previousRounds:", previousRounds);
-  
-  if (!standings || standings.length === 0) return [];
 
-  const teams = standings.map((s) => s.team);
+  if (!standings || standings.length < 2) return [];
+
+  // 1) Order teams by points & shot diff if available
+  const ordered = [...standings].sort((a, b) => {
+    const pa = a.points ?? 0;
+    const pb = b.points ?? 0;
+    if (pb !== pa) return pb - pa;
+
+    const da = a.diff ?? 0;
+    const db = b.diff ?? 0;
+    if (db !== da) return db - da;
+
+    // fallback: alphabetical
+    return String(a.team).localeCompare(String(b.team));
+  });
+
+  const teams = ordered.map((s) => s.team);
   const N = teams.length;
-  const usedPairs = new Set();
-  const teamRinkHistory = {}; // team -> { rinkName: count }
 
-  // Build previous opponent + rink history
+  // 2) Build opponent + rink history from ALL previous rounds
+  const usedPairs = new Set();          // "AA_BB"
+  const teamRinkHistory = {};           // team -> { "A1": count, "B3": count, ... }
+
   previousRounds.forEach((round) => {
-    round.forEach((m) => {
+    (round || []).forEach((m) => {
+      if (!m || !m.team1 || !m.team2) return;
+
       const k1 = m.team1 + "_" + m.team2;
       const k2 = m.team2 + "_" + m.team1;
       usedPairs.add(k1);
       usedPairs.add(k2);
 
-      const rinkName = m.green + String(m.rink);
+      if (m.green && m.rink != null) {
+        const rinkName = String(m.green) + String(m.rink);
 
-      if (!teamRinkHistory[m.team1]) teamRinkHistory[m.team1] = {};
-      if (!teamRinkHistory[m.team2]) teamRinkHistory[m.team2] = {};
+        if (!teamRinkHistory[m.team1]) teamRinkHistory[m.team1] = {};
+        if (!teamRinkHistory[m.team2]) teamRinkHistory[m.team2] = {};
 
-      teamRinkHistory[m.team1][rinkName] =
-        (teamRinkHistory[m.team1][rinkName] || 0) + 1;
-
-      teamRinkHistory[m.team2][rinkName] =
-        (teamRinkHistory[m.team2][rinkName] || 0) + 1;
+        teamRinkHistory[m.team1][rinkName] =
+          (teamRinkHistory[m.team1][rinkName] || 0) + 1;
+        teamRinkHistory[m.team2][rinkName] =
+          (teamRinkHistory[m.team2][rinkName] || 0) + 1;
+      }
     });
   });
 
-  /** STEP 1 — provisional pairings by standings */
+  // 3) Initial pairings: 1 vs 2, 3 vs 4, ...
   const provisional = [];
-  for (let i = 0; i < N; i += 2) {
-    if (i + 1 < N) {
-      provisional.push([teams[i], teams[i + 1]]);
-    }
+  for (let i = 0; i + 1 < N; i += 2) {
+    provisional.push([teams[i], teams[i + 1]]);
   }
 
-  /** STEP 2 — repair any repeated opponents */
+  // 4) Repair any repeated opponents by swapping
   for (let i = 0; i < provisional.length; i++) {
     let [A, B] = provisional[i];
     let key = A + "_" + B;
+    if (!usedPairs.has(key)) continue; // unique -> OK
 
-    if (!usedPairs.has(key)) continue; // OK pair
-
-    // Try to swap with another pairing
+    // Try to swap B with someone else
     for (let j = i + 1; j < provisional.length; j++) {
       let [C, D] = provisional[j];
 
-      // Try swap B <-> C
-      if (!usedPairs.has(A + "_" + C)) {
+      // Try A vs C
+      if (!usedPairs.has(A + "_" + C) && !usedPairs.has(C + "_" + A)) {
         provisional[i] = [A, C];
         provisional[j] = [B, D];
+        key = A + "_" + C;
         break;
       }
 
-      // Try swap B <-> D
-      if (!usedPairs.has(A + "_" + D)) {
+      // Try A vs D
+      if (!usedPairs.has(A + "_" + D) && !usedPairs.has(D + "_" + A)) {
         provisional[i] = [A, D];
         provisional[j] = [B, C];
+        key = A + "_" + D;
         break;
       }
     }
   }
 
-  /** STEP 3 — Assign rinks */
-
+  // 5) Rink allocation
+  // Rinks available THIS round (no duplicates per round)
   const rinkOrder = [
-    "A1","A2","A3","A4","A5","A6",
-    "B1","B2","B3","B4","B5","B6"
+    "A1", "A2", "A3", "A4", "A5", "A6",
+    "B1", "B2", "B3", "B4", "B5", "B6"
   ];
-  let rinkPointer = 0;
+  const rinksThisRound = new Set(); // "A1", "B3", ...
 
   const round = [];
 
-  for (let i = 0; i < provisional.length; i++) {
-    const [team1, team2] = provisional[i];
+  for (const [team1, team2] of provisional) {
+    // Pick the "best" rink for these two teams:
+    // - must not be used yet this round
+    // - minimise (historyTeam1 + historyTeam2)
+    let bestLabel = null;
+    let bestScore = Infinity;
 
-    // Default rink in simple rotation (A1..A6,B1..B6)
-    let assigned = rinkOrder[rinkPointer % rinkOrder.length];
-    rinkPointer++;
+    for (const label of rinkOrder) {
+      if (rinksThisRound.has(label)) continue;
 
-    // Only try to avoid repeat rinks if either team has history
-    const avoid = teamRinkHistory[team1] || {};
-    const avoid2 = teamRinkHistory[team2] || {};
-    const hasHistory =
-      Object.keys(avoid).length > 0 || Object.keys(avoid2).length > 0;
+      const h1 = teamRinkHistory[team1]?.[label] || 0;
+      const h2 = teamRinkHistory[team2]?.[label] || 0;
+      const score = h1 + h2;
 
-    if (hasHistory) {
-      const safeRinks = rinkOrder.filter(
-        (r) => !avoid[r] && !avoid2[r]
-      );
-
-      if (safeRinks.length > 0) {
-        assigned = safeRinks[0];
+      if (score < bestScore) {
+        bestScore = score;
+        bestLabel = label;
       }
     }
 
-    const green = assigned[0];
-    const rink = parseInt(assigned.slice(1), 10);
-	
-	//Pairings DEBUG
-	console.log(
-	"PAIRINGS DEBUG — history for",
-	team1,
-	team2,
-	teamRinkHistory[team1],
-	teamRinkHistory[team2]
-);
+    // Fallback in case there are more matches than rinks
+    if (!bestLabel) {
+      for (const label of rinkOrder) {
+        const h1 = teamRinkHistory[team1]?.[label] || 0;
+        const h2 = teamRinkHistory[team2]?.[label] || 0;
+        const score = h1 + h2;
+        if (score < bestScore) {
+          bestScore = score;
+          bestLabel = label;
+        }
+      }
+    }
 
+    // Parse green + rink
+    const green = bestLabel ? bestLabel[0] : "A";
+    const rink = bestLabel ? parseInt(bestLabel.slice(1), 10) : 1;
 
-    // Record rink usage for future rounds
-    const rinkName = assigned;
-    teamRinkHistory[team1] = teamRinkHistory[team1] || {};
-    teamRinkHistory[team2] = teamRinkHistory[team2] || {};
+    // Mark rink used this round
+    const rinkName = green + String(rink);
+    rinksThisRound.add(rinkName);
 
+    // Update cumulative rink history for future rounds
+    if (!teamRinkHistory[team1]) teamRinkHistory[team1] = {};
+    if (!teamRinkHistory[team2]) teamRinkHistory[team2] = {};
     teamRinkHistory[team1][rinkName] =
       (teamRinkHistory[team1][rinkName] || 0) + 1;
     teamRinkHistory[team2][rinkName] =
       (teamRinkHistory[team2][rinkName] || 0) + 1;
 
+    // Build match object expected by the rest of the app
     round.push({
       team1,
       team2,
       green,
       rink,
+      // Skins/standard fields start empty; Matches.jsx will fill them
       score1: null,
       score2: null,
+      skins: [
+        { a: null, b: null },
+        { a: null, b: null },
+        { a: null, b: null }
+      ],
+      totalA: null,
+      totalB: null,
+      skinPointsA: null,
+      skinPointsB: null,
+      bonusA: null,
+      bonusB: null,
+      matchPointsA: null,
+      matchPointsB: null,
       verified: false
     });
   }
 
+  console.log("PAIRINGS DEBUG — generated round:", round);
   return round;
 }
