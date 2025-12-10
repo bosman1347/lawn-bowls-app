@@ -15,9 +15,7 @@ export default function App() {
       <Navbar />
 
       <Routes>
-        {/* Home page now correctly uses Home.jsx */}
         <Route path="/" element={<Home />} />
-
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/tournaments" element={<Dashboard />} />
         <Route path="/new" element={<NewTournament />} />
