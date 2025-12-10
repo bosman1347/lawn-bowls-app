@@ -154,59 +154,50 @@ export default function Dashboard() {
       <h2 style={{ marginTop: "2rem" }}>Saved Tournaments</h2>
 
       {list.length === 0 ? (
-        <p>No tournaments created yet.</p>
-      ) : (
-        <div className="tournament-row">
-          {list.map((name) => (
-            <div
-              key={name}
-              className={`tournament-card ${
-                active === name ? "active-card" : ""
-              }`}
-            >
-              <h3>{name}</h3>
+        {list.length === 0 ? (
+  <p>No tournaments created yet.</p>
+) : (
+  <div className="tournament-row">
+    {list.map((name) => (
+      <div
+        key={name}
+        className={`tournament-card ${
+          active === name ? "active-card" : ""
+        }`}
+      >
+        <h3>{name}</h3>
 
-              <div className="card-buttons">
-                <button className="btn-secondary" onClick={() => openTournament(name)}>
-                  Open
-                </button>
+        <div className="card-buttons">
+          <button
+            className="btn-secondary"
+            onClick={() => openTournament(name)}
+          >
+            Open
+          </button>
 
-                <button className="btn-secondary" onClick={() => renameTournament(name)}>
-                  Rename
-                </button>
+          <button
+            className="btn-secondary"
+            onClick={() => renameTournament(name)}
+          >
+            Rename
+          </button>
 
-                <button className="btn-secondary" onClick={() => duplicateTournament(name)}>
-                  Duplicate
-                </button>
+          <button
+            className="btn-secondary"
+            onClick={() => duplicateTournament(name)}
+          >
+            Duplicate
+          </button>
 
-                <button className="btn-danger" onClick={() => deleteTournament(name)}>
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
+          <button
+            className="btn-danger"
+            onClick={() => deleteTournament(name)}
+          >
+            Delete
+          </button>
         </div>
-      )}
-
-      {active && (
-        <div>
-          <h3 style={{ marginTop: "2rem" }}>Active Tournament: {active}</h3>
-
-          <div className="active-buttons">
-            <Link to="/matches">
-              <button className="btn-primary">Matches</button>
-            </Link>
-
-            <Link to="/standings">
-              <button className="btn-primary">Standings</button>
-            </Link>
-
-            <Link to="/summary">
-              <button className="btn-primary">Summary</button>
-            </Link>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+      </div>
+    ))}
+  </div>
+)}
 
