@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import QRCode from "qrcode.react"; // top of Dashboard.jsx
+import QRCode from "qrcode.react";
 
 import {
   loadTournaments,
@@ -15,6 +15,11 @@ import { computeStandings } from "../utils/standings";
 export default function Dashboard() {
   const [list, setList] = useState([]);
   const [active, setActive] = useState("");
+
+  // QR state
+  const [qrUrl, setQrUrl] = useState("");
+  const [qrRound, setQrRound] = useState("");
+  const [qrRink, setQrRink] = useState("");
 
   useEffect(() => {
     const all = loadTournaments();
@@ -33,6 +38,7 @@ export default function Dashboard() {
     delete all[name];
     saveTournaments(all);
     setList(Object.keys(all));
+
     if (getActiveTournament() === name) {
       setActiveTournament("");
       setActive("");
@@ -59,7 +65,7 @@ export default function Dashboard() {
     }
 
     setList(Object.keys(all));
-  //};
+  };
 
   const duplicateTournament = (name) => {
     const newName = prompt("Name for duplicated tournament:");
@@ -76,6 +82,9 @@ export default function Dashboard() {
     setList(Object.keys(all));
   };
 
+  // -----------------------------
+  // Generate NEXT ROUND
+  // -----------------------------
   const handleGenerateNextRound = () => {
     const all = loadTournaments();
     const name = getActiveTournament();
@@ -88,44 +97,16 @@ export default function Dashboard() {
     const tournament = all[name];
     const previousRounds = tournament.matches || [];
 
-   let standings;
-   
-   const [qrDataUrl, setQrDataUrl] = useState("");
-	const [qrRound, setQrRound] = useState(""); // 1-based
-	const [qrRink, setQrRink] = useState(""); // e.g. A3
+    let standings;
 
-	const buildQrForRound = (roundIndex, rink) => {
-	if (!active) { alert("Select an active tournament first."); 
-	return; 
-	}
-	const t = encodeURIComponent(active);
-	
-	if (!qrRound) {
-    alert("Enter a round number.");
-    return;
-  }
-	const r = encodeURIComponent(qrRound);
+    if (previousRounds.length === 0) {
+      // Round 1 – no standings yet
+      standings = tournament.teams.map((t) => ({ team: t }));
+    } else {
+      standings = computeStandings(previousRounds);
+    }
 
-  let url = `${window.location.origin}/player?t=${t}&r=${r}`;
-
-  if (qrRink) {
-    url += `&rink=${encodeURIComponent(qrRink)}`;
-  }
-
-  setQrUrl(url);
-};
-
-if (previousRounds.length === 0) {
-  // Round 1 — no standings yet
-  standings = tournament.teams.map((t) => ({ team: t }));
-} else {
-  // Round 2+ — use real standings
-  standings = computeStandings(previousRounds);
-}
-
-
-const nextRound = generateNextRound(standings, previousRounds);
-
+    const nextRound = generateNextRound(standings, previousRounds);
 
     if (!nextRound || nextRound.length === 0) {
       alert("Could not generate new round.");
@@ -137,6 +118,30 @@ const nextRound = generateNextRound(standings, previousRounds);
     saveTournaments(all);
 
     alert(`Round ${tournament.matches.length} generated.`);
+  };
+
+  // -----------------------------
+  // QR CODE BUILDER
+  // -----------------------------
+  const buildQrForRound = () => {
+    if (!active) {
+      alert("Select an active tournament first.");
+      return;
+    }
+    if (!qrRound) {
+      alert("Enter a round number.");
+      return;
+    }
+
+    const t = encodeURIComponent(active);
+    const r = encodeURIComponent(qrRound);
+
+    let url = `${window.location.origin}/player?t=${t}&r=${r}`;
+    if (qrRink) {
+      url += `&rink=${encodeURIComponent(qrRink)}`;
+    }
+
+    setQrUrl(url);
   };
 
   return (
@@ -163,31 +168,19 @@ const nextRound = generateNextRound(standings, previousRounds);
               <h3>{name}</h3>
 
               <div className="card-buttons">
-                <button
-                  className="btn-secondary"
-                  onClick={() => openTournament(name)}
-                >
+                <button className="btn-secondary" onClick={() => openTournament(name)}>
                   Open
                 </button>
 
-                <button
-                  className="btn-secondary"
-                  onClick={() => renameTournament(name)}
-                >
+                <button className="btn-secondary" onClick={() => renameTournament(name)}>
                   Rename
                 </button>
 
-                <button
-                  className="btn-secondary"
-                  onClick={() => duplicateTournament(name)}
-                >
+                <button className="btn-secondary" onClick={() => duplicateTournament(name)}>
                   Duplicate
                 </button>
 
-                <button
-                  className="btn-danger"
-                  onClick={() => deleteTournament(name)}
-                >
+                <button className="btn-danger" onClick={() => deleteTournament(name)}>
                   Delete
                 </button>
               </div>
@@ -196,7 +189,7 @@ const nextRound = generateNextRound(standings, previousRounds);
         </div>
       )}
 
-      
+      {active && (
         <div style={{ marginTop: "2rem" }}>
           <h3>Active Tournament: {active}</h3>
 
@@ -204,25 +197,7 @@ const nextRound = generateNextRound(standings, previousRounds);
             <button className="btn-primary" onClick={handleGenerateNextRound}>
               Generate Next Round
             </button>
-			
-			<div style={{ marginTop: 12 }}>
-			   <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-				<input placeholder="Round #" value={qrRound} onChange={(e)=>setQrRound(e.target.value)} style={{ width: 80 }} />
-				<input placeholder="Rink (e.g. A3)" value={qrRink} onChange={(e)=>setQrRink(e.target.value)} style={{ width: 120 }} />
-				<button onClick={() => buildQrForRound(Number(qrRound)-1, qrRink)} className="btn-secondary">Build QR</button>
-			</div>
 
-			{qrDataUrl && (
-				<div style={{ marginTop: 8 }}>
-					<div>Open on phone: <a href={qrDataUrl} target="_blank" rel="noreferrer">{qrDataUrl}</a></div>
-					<div style={{ marginTop: 6 }}>
-					<QRCode value={qrDataUrl} size={160} />
-				</div>
-			</div>
-		   )}
-		</div>
-
-		{active && (
             <Link to="/matches">
               <button className="btn-primary">Matches</button>
             </Link>
@@ -234,6 +209,42 @@ const nextRound = generateNextRound(standings, previousRounds);
             <Link to="/summary">
               <button className="btn-primary">Summary</button>
             </Link>
+          </div>
+
+          {/* QR CODE SECTION */}
+          <div style={{ marginTop: "2rem" }}>
+            <h3>Generate QR Code for Players</h3>
+
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input
+                placeholder="Round #"
+                value={qrRound}
+                onChange={(e) => setQrRound(e.target.value)}
+                style={{ width: 80 }}
+              />
+              <input
+                placeholder="Rink (e.g. A3)"
+                value={qrRink}
+                onChange={(e) => setQrRink(e.target.value)}
+                style={{ width: 120 }}
+              />
+              <button className="btn-secondary" onClick={buildQrForRound}>
+                Build QR
+              </button>
+            </div>
+
+            {qrUrl && (
+              <div style={{ marginTop: 10 }}>
+                <div>
+                  <strong>Open on phone:</strong>{" "}
+                  <a href={qrUrl} target="_blank" rel="noreferrer">{qrUrl}</a>
+                </div>
+
+                <div style={{ marginTop: 10 }}>
+                  <QRCode value={qrUrl} size={160} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
