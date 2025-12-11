@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import QRCode from "qrcode.react"; // top of Dashboard.jsx
 
 import {
   loadTournaments,
@@ -58,7 +59,7 @@ export default function Dashboard() {
     }
 
     setList(Object.keys(all));
-  };
+  //};
 
   const duplicateTournament = (name) => {
     const newName = prompt("Name for duplicated tournament:");
@@ -88,6 +89,18 @@ export default function Dashboard() {
     const previousRounds = tournament.matches || [];
 
    let standings;
+   
+   const [qrDataUrl, setQrDataUrl] = useState("");
+	const [qrRound, setQrRound] = useState(""); // 1-based
+	const [qrRink, setQrRink] = useState(""); // e.g. A3
+
+	const buildQrForRound = (roundIndex, rink) => {
+	if (!active) { alert("Select an active tournament first."); return; }
+	const t = encodeURIComponent(active);
+	const r = encodeURIComponent(String(roundIndex + 1));
+	const q = `${window.location.origin}/player?t=${t}&r=${r}${rink ? `&rink=${encodeURIComponent(rink)}` : ""}`;
+	setQrDataUrl(q);
+	):
 
 if (previousRounds.length === 0) {
   // Round 1 — no standings yet
@@ -170,7 +183,7 @@ const nextRound = generateNextRound(standings, previousRounds);
         </div>
       )}
 
-      {active && (
+      
         <div style={{ marginTop: "2rem" }}>
           <h3>Active Tournament: {active}</h3>
 
@@ -178,7 +191,25 @@ const nextRound = generateNextRound(standings, previousRounds);
             <button className="btn-primary" onClick={handleGenerateNextRound}>
               Generate Next Round
             </button>
+			
+			<div style={{ marginTop: 12 }}>
+			   <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+				<input placeholder="Round #" value={qrRound} onChange={(e)=>setQrRound(e.target.value)} style={{ width: 80 }} />
+				<input placeholder="Rink (e.g. A3)" value={qrRink} onChange={(e)=>setQrRink(e.target.value)} style={{ width: 120 }} />
+				<button onClick={() => buildQrForRound(Number(qrRound)-1, qrRink)} className="btn-secondary">Build QR</button>
+			</div>
 
+			{qrDataUrl && (
+				<div style={{ marginTop: 8 }}>
+					<div>Open on phone: <a href={qrDataUrl} target="_blank" rel="noreferrer">{qrDataUrl}</a></div>
+					<div style={{ marginTop: 6 }}>
+					<QRCode value={qrDataUrl} size={160} />
+				</div>
+			</div>
+		   )}
+		</div>
+
+		{active && (
             <Link to="/matches">
               <button className="btn-primary">Matches</button>
             </Link>
