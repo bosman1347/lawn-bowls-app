@@ -95,12 +95,25 @@ export default function Dashboard() {
 	const [qrRink, setQrRink] = useState(""); // e.g. A3
 
 	const buildQrForRound = (roundIndex, rink) => {
-	if (!active) { alert("Select an active tournament first."); return; }
+	if (!active) { alert("Select an active tournament first."); 
+	return; 
+	}
 	const t = encodeURIComponent(active);
-	const r = encodeURIComponent(String(roundIndex + 1));
-	const q = `${window.location.origin}/player?t=${t}&r=${r}${rink ? `&rink=${encodeURIComponent(rink)}` : ""}`;
-	setQrDataUrl(q);
-	):
+	
+	if (!qrRound) {
+    alert("Enter a round number.");
+    return;
+  }
+	const r = encodeURIComponent(qrRound);
+
+  let url = `${window.location.origin}/player?t=${t}&r=${r}`;
+
+  if (qrRink) {
+    url += `&rink=${encodeURIComponent(qrRink)}`;
+  }
+
+  setQrUrl(url);
+};
 
 if (previousRounds.length === 0) {
   // Round 1 — no standings yet

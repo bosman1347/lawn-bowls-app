@@ -6,8 +6,8 @@ import NewTournament from "./pages/NewTournament";
 import Matches from "./pages/Matches";
 import Standings from "./pages/Standings";
 import Summary from "./pages/Summary";
-import PlayerEntry from "./pages/PlayerEntry";
 import Navbar from "./components/Navbar";
+import PlayerEntry from "./pages/PlayerEntry";
 
 export default function App() {
   return (
