@@ -20,3 +20,14 @@ export function unlockAdmin(pin) {
 export function lockAdmin() {
   localStorage.removeItem("adminUnlocked");
 }
+
+export function unlockAdmin(pin) {
+  console.log("unlockAdmin called with:", pin);
+  if (String(pin) === ADMIN_PIN) {
+    localStorage.setItem("adminUnlocked", "yes");
+    console.log("unlockAdmin: success");
+    return true;
+  }
+  console.log("unlockAdmin: failed");
+  return false;
+}

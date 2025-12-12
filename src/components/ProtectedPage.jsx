@@ -12,3 +12,6 @@ export default function ProtectedPage({ children }) {
 
   return <>{children}</>;
 }
+
+const [unlocked, setUnlocked] = useState(isAdmin());
+console.log("ProtectedPage initial unlocked:", unlocked);
