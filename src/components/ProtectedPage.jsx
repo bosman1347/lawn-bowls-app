@@ -1,10 +1,10 @@
-// src/components/ProtectedPage.jsx
 import { useState } from "react";
 import { isAdmin } from "../utils/auth";
-import PinEntry from "../pages/PinEntry";
+import PinEntry from "../pages/PinEntry,jsx";
 
 export default function ProtectedPage({ children }) {
   const [unlocked, setUnlocked] = useState(isAdmin());
+  console.log("ProtectedPage initial unlocked:", unlocked);
 
   if (!unlocked) {
     return <PinEntry onSuccess={() => setUnlocked(true)} />;
@@ -12,6 +12,3 @@ export default function ProtectedPage({ children }) {
 
   return <>{children}</>;
 }
-
-const [unlocked, setUnlocked] = useState(isAdmin());
-console.log("ProtectedPage initial unlocked:", unlocked);
