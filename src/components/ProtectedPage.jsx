@@ -1,3 +1,4 @@
+// src/components/ProtectedPage.jsx
 import { useState } from "react";
 import { isAdmin } from "../utils/auth";
 import PinEntry from "../pages/PinEntry";
@@ -9,5 +10,5 @@ export default function ProtectedPage({ children }) {
     return <PinEntry onSuccess={() => setUnlocked(true)} />;
   }
 
-  return children;
+  return <>{children}</>;
 }

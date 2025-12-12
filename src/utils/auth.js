@@ -1,11 +1,16 @@
+// src/utils/auth.js
 export const ADMIN_PIN = "9451";
 
 export function isAdmin() {
-  return localStorage.getItem("adminUnlocked") === "yes";
+  try {
+    return localStorage.getItem("adminUnlocked") === "yes";
+  } catch (e) {
+    return false;
+  }
 }
 
 export function unlockAdmin(pin) {
-  if (pin === ADMIN_PIN) {
+  if (String(pin) === ADMIN_PIN) {
     localStorage.setItem("adminUnlocked", "yes");
     return true;
   }
