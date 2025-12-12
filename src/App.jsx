@@ -10,7 +10,7 @@ import Summary from "./pages/Summary";
 import Navbar from "./components/Navbar";
 import PlayerEntry from "./pages/PlayerEntry";
 
-import AppWrapper from "./AppWrapper"; // if you have one
+//import AppWrapper from "./AppWrapper"; // if you have one
 
 
 export default function App() {
