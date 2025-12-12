@@ -8,7 +8,7 @@ import Matches from "./pages/Matches";
 import Standings from "./pages/Standings";
 import Summary from "./pages/Summary";
 import Navbar from "./components/Navbar";
-import PlayerEntry from "./pages/PlayerPortal";
+import PlayerEntry from "./pages/PlayerEntry";
 
 import AppWrapper from "./AppWrapper"; // if you have one
 
@@ -40,7 +40,7 @@ export default function App() {
 				<Summary />
 			</ProtectedPage>
 		} />
-		<Route path="/player" element={<PlayerPortal />} />
+		<Route path="/player" element={<PlayerEntry />} />
       </Routes>
     </Router>
   );
