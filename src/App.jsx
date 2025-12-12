@@ -3,11 +3,15 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import NewTournament from "./pages/NewTournament";
+import ProtectedPage from "./components/ProtectedPage";
 import Matches from "./pages/Matches";
 import Standings from "./pages/Standings";
 import Summary from "./pages/Summary";
 import Navbar from "./components/Navbar";
-import PlayerEntry from "./pages/PlayerEntry";
+import PlayerEntry from "./pages/PlayerPortal";
+
+import AppWrapper from "./AppWrapper"; // if you have one
+
 
 export default function App() {
   return (
@@ -19,10 +23,24 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/tournaments" element={<Dashboard />} />
         <Route path="/new" element={<NewTournament />} />
-        <Route path="/matches" element={<Matches />} />
-        <Route path="/standings" element={<Standings />} />
-        <Route path="/summary" element={<Summary />} />
-		<Route path="/player" element={<PlayerEntry />} />
+        <Route path="/matches" element={
+			<ProtectedPage>
+				<Matches />
+			</ProtectedPage>
+		} />
+
+		<Route path="/standings" element={
+			<ProtectedPage>
+				<Standings />
+			</ProtectedPage>
+		} />
+
+		<Route path="/summary" element={
+			<ProtectedPage>
+				<Summary />
+			</ProtectedPage>
+		} />
+		<Route path="/player" element={<PlayerPortal />} />
       </Routes>
     </Router>
   );
