@@ -2,18 +2,22 @@
 
 const ADMIN_PIN = "9451";
 
-export const unlockAdmin = (pin) => {
-  if (String(pin) === ADMIN_PIN) {
-    localStorage.setItem("adminUnlocked", "yes");
-    return true;
+const auth = {
+  unlock(pin) {
+    if (String(pin) === ADMIN_PIN) {
+      localStorage.setItem("adminUnlocked", "yes");
+      return true;
+    }
+    return false;
+  },
+
+  isUnlocked() {
+    return localStorage.getItem("adminUnlocked") === "yes";
+  },
+
+  lock() {
+    localStorage.removeItem("adminUnlocked");
   }
-  return false;
 };
 
-export const isAdminUnlocked = () => {
-  return localStorage.getItem("adminUnlocked") === "yes";
-};
-
-export const lockAdmin = () => {
-  localStorage.removeItem("adminUnlocked");
-};
+export default auth;

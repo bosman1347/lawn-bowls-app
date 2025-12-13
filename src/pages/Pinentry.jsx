@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { unlockAdmin } from "../utils/auth";
+import auth from "../utils/auth";
 
 export default function PinEntry({ onSuccess }) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
 
   const submitPin = () => {
-    if (unlockAdmin(pin)) {
+    if (auth.unlock(pin)) {
       setError("");
-      onSuccess();
+      if (typeof onSuccess === "function") onSuccess();
     } else {
       setError("Incorrect PIN");
     }
