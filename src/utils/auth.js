@@ -2,10 +2,6 @@
 
 const ADMIN_PIN = "9451";
 
-export function isAdmin() {
-  return localStorage.getItem("adminUnlocked") === "yes";
-}
-
 export function unlockAdmin(pin) {
   if (String(pin) === ADMIN_PIN) {
     localStorage.setItem("adminUnlocked", "yes");
@@ -14,6 +10,10 @@ export function unlockAdmin(pin) {
   return false;
 }
 
-export function logoutAdmin() {
+export function isAdminUnlocked() {
+  return localStorage.getItem("adminUnlocked") === "yes";
+}
+
+export function lockAdmin() {
   localStorage.removeItem("adminUnlocked");
 }
