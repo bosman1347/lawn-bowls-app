@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { isAdmin } from "../utils/auth";
-import PinEntry from "../pages/PinEntry";
+import PinEntry from "../pages/PinEntry.jsx";
 
 export default function ProtectedPage({ children }) {
   const [unlocked, setUnlocked] = useState(isAdmin());
