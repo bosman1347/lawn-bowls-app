@@ -1,14 +1,11 @@
-import { useState } from "react";
-import { isAdmin } from "../utils/auth";
-import PinEntry from "../pages/PinEntry";
+import { Navigate } from "react-router-dom";
+import auth from "../utils/auth";
+import PinEntry from "../pages/PinEntry.jsx";
 
 export default function ProtectedPage({ children }) {
-  const [unlocked, setUnlocked] = useState(isAdmin());
-  console.log("ProtectedPage initial unlocked:", unlocked);
-
-  if (!unlocked) {
-    return <PinEntry onSuccess={() => setUnlocked(true)} />;
+  if (!auth.isUnlocked()) {
+    return <PinEntry />;
   }
 
-  return <>{children}</>;
+  return children;
 }
