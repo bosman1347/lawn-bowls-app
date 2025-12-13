@@ -17,8 +17,8 @@ function parseRinkParam(rinkParam) {
 }
 
 export default function PlayerEntry() {
-  const [search] = useSearchParams();
-  const tParam = search.get("t"); // tournament name (optional)
+  const [searchParams] = useSearchParams();
+  const tournamentName = searchParams.get("tournament");
   const roundParam = search.get("r"); // round index (1-based)
   const rinkParam = search.get("rink"); // e.g. "A3"
   const [match, setMatch] = useState(null);
