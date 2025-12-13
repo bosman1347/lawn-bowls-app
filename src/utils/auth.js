@@ -7,7 +7,6 @@ export function isAdmin() {
 }
 
 export function unlockAdmin(pin) {
-  console.log("unlockAdmin called with:", pin);
   if (String(pin) === ADMIN_PIN) {
     localStorage.setItem("adminUnlocked", "yes");
     return true;
