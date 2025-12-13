@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import auth from "../utils/auth";
-import PinEntry from "../pages/PinEntry.jsx";
+import PinEntry from "/src/pages/PinEntry.jsx";;
 
 export default function ProtectedPage({ children }) {
   if (!auth.isUnlocked()) {
