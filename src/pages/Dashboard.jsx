@@ -136,7 +136,10 @@ export default function Dashboard() {
     const t = encodeURIComponent(active);
     const r = encodeURIComponent(qrRound);
 
-    let url = `${window.location.origin}/player?t=${t}&r=${r}`;
+    const url =
+  window.location.origin +
+  "/player?tournament=" +
+  encodeURIComponent(activeTournamentName);
     if (qrRink) {
       url += `&rink=${encodeURIComponent(qrRink)}`;
     }
