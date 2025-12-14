@@ -1,14 +1,17 @@
 import { useState } from "react";
-import auth from "../utils/auth";
+import { unlockAdmin } from "../utils/auth";
+import { useNavigate } from "react-router-dom";
 
-export default function PinEntry({ onSuccess }) {
+export default function PinEntry() {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const submitPin = () => {
-    if (auth.unlock(pin)) {
-      setError("");
-      if (typeof onSuccess === "function") onSuccess();
+  const handleUnlock = () => {
+    const ok = unlockAdmin(pin);
+
+    if (ok) {
+      navigate("/matches");
     } else {
       setError("Incorrect PIN");
     }
@@ -16,20 +19,16 @@ export default function PinEntry({ onSuccess }) {
 
   return (
     <div className="page">
-      <h2>Admin Access Required</h2>
-      <p>Enter PIN to continue:</p>
+      <h2>Admin Access</h2>
 
       <input
         type="password"
         value={pin}
-        placeholder="PIN"
         onChange={(e) => setPin(e.target.value)}
-        className="pin-input"
+        placeholder="Enter PIN"
       />
 
-      <button className="btn-primary" onClick={submitPin}>
-        Unlock
-      </button>
+      <button onClick={handleUnlock}>Unlock</button>
 
       {error && <p style={{ color: "red" }}>{error}</p>}
     </div>
