@@ -23,18 +23,16 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/tournaments" element={<Dashboard />} />
         <Route path="/new" element={<NewTournament />} />
-		<Route path="/new" element={<PinEntry />} />
-        <Route path="/matches" element={
-			<ProtectedPage>
-				<Matches />
-			</ProtectedPage>
-		} />
+		<Route path="/pin" element={<PinEntry />} />
 
-		<Route path="/standings" element={
-			<ProtectedPage>
-				<Standings />
-			</ProtectedPage>
-		} />
+<Route
+  path="/matches"
+  element={
+    <ProtectedPage>
+      <Matches />
+    </ProtectedPage>
+  }
+ />
 
 		<Route path="/summary" element={
 			<ProtectedPage>
