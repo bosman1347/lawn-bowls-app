@@ -25,14 +25,14 @@ export default function App() {
         <Route path="/new" element={<NewTournament />} />
 		<Route path="/pin" element={<PinEntry />} />
 
-<Route
-  path="/matches"
-  element={
-    <ProtectedPage>
-      <Matches />
-    </ProtectedPage>
-  }
- />
+		<Route
+			path="/matches"
+			element={
+			<ProtectedPage>
+				<Matches />
+			</ProtectedPage>
+			}
+		/>
 
 		<Route path="/summary" element={
 			<ProtectedPage>
