@@ -133,13 +133,15 @@ export default function Dashboard() {
       return;
     }
 
-    const t = encodeURIComponent(active);
-    const r = encodeURIComponent(qrRound);
+    //const t = encodeURIComponent(active);
+    //const r = encodeURIComponent(qrRound);
 
     const url =
       window.location.origin +
-      "/player?tournament=" +
-      encodeURIComponent(activeTournamentName);
+      "/player?t=" +
+      encodeURIComponent(active);
+	  "&round=" +
+      encodeURIComponent(qrRound);
 	  
     if (qrRink) {
       url += `&rink=${encodeURIComponent(qrRink)}`;
