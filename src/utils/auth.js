@@ -1,23 +1,36 @@
-// src/utils/auth.js
+import { useState } from "react";
+import { unlockAdmin } from "../utils/auth";
+import { useNavigate } from "react-router-dom";
 
-const ADMIN_PIN = "9451";
+export default function PinEntry() {
+  const [pin, setPin] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-const auth = {
-  unlock(pin) {
-    if (String(pin) === ADMIN_PIN) {
-      localStorage.setItem("adminUnlocked", "yes");
-      return true;
+  const handleUnlock = () => {
+    const ok = unlockAdmin(pin);
+
+    if (ok) {
+      navigate("/matches");
+    } else {
+      setError("Incorrect PIN");
     }
-    return false;
-  },
+  };
 
-  isUnlocked() {
-    return localStorage.getItem("adminUnlocked") === "yes";
-  },
+  return (
+    <div className="page">
+      <h2>Admin Access</h2>
 
-  lock() {
-    localStorage.removeItem("adminUnlocked");
-  }
-};
+      <input
+        type="password"
+        value={pin}
+        onChange={(e) => setPin(e.target.value)}
+        placeholder="Enter PIN"
+      />
 
-export default auth;
+      <button onClick={handleUnlock}>Unlock</button>
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
+    </div>
+  );
+}
