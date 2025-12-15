@@ -34,14 +34,19 @@ export default function App() {
 			</ProtectedPage>
 			}
 		/>
-
+		<Route 
+			path-"/standings" element{
+				<Standings>
+					<Standings />
+				</Standings>
+		}	/>
 		<Route path="/summary" element={
 			<ProtectedPage>
 				<Summary />
 			</ProtectedPage>
 		} />
 		<Route path="/player" element={<PlayerEntry />} />
-		<Route path-"/standings" element{<Standings /> />
+		
       </Routes>
     </Router>
   );
