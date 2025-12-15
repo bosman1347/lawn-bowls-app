@@ -9,7 +9,7 @@ import Standings from "./pages/Standings";
 import Summary from "./pages/Summary";
 import Navbar from "./components/Navbar";
 import PlayerEntry from "./pages/PlayerEntry";
-import pinEntry from "./pages/PinEntry";
+import pinEntry from "./components/PinEntry";
 
 //import AppWrapper from "./AppWrapper"; // if you have one
 
