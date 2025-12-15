@@ -151,4 +151,4 @@ export default function NewTournament() {
       </button>
     </div>
   );
-}
+
