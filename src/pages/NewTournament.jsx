@@ -97,7 +97,7 @@ export default function NewTournament() {
     window.location.href = "/";
   };
 
-  return (
+  //return (
     <div className="page">
       <h2>Create New Tournament</h2>
 
