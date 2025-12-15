@@ -62,7 +62,7 @@ export default function NewTournament() {
 
   window.location.href = "/";
 };
-;
+
 
 
     const trimmedTeams = teams.map((t) => t.trim()).filter(Boolean);
@@ -71,7 +71,7 @@ export default function NewTournament() {
       return;
     }
 
-    //const all = loadTournaments();
+    
 
     if (all[trimmedName]) {
       const overwrite = window.confirm(
@@ -89,7 +89,7 @@ export default function NewTournament() {
       results: {}                   // reserved for future use
     };
 
-    import { saveTournament } from "../utils/api";
+    
 
     setActiveTournament(trimmedName);
 
