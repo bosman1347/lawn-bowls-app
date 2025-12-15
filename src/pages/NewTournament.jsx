@@ -106,3 +106,4 @@ export default function NewTournament() {
     </div>
   );
 }
+
