@@ -136,7 +136,7 @@ export default function Dashboard() {
     //const t = encodeURIComponent(active);
     //const r = encodeURIComponent(qrRound);
 
-    const url =
+    let url =
       window.location.origin +
       "/player?t=" +
       encodeURIComponent(active);
