@@ -1,60 +1,67 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { loadTournaments } from "../utils/storage";
+import { loadAllTournaments } from "../utils/api";
 
 export default function PlayerEntry() {
   const [params] = useSearchParams();
-  const tParam = params.get("t");
+  const tournamentName = params.get("t");
 
-  const [tournamentName, setTournamentName] = useState("");
-  const [round, setRound] = useState(null);
-  const [msg, setMsg] = useState("");
+  const [tournament, setTournament] = useState(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!tParam) {
-      setMsg("Tournament not specified.");
-      return;
+    async function load() {
+      if (!tournamentName) {
+        setError("Tournament not specified.");
+        return;
+      }
+
+      try {
+        const all = await loadAllTournaments();
+        const data = all[tournamentName];
+
+        if (!data) {
+          setError("Tournament not found. Ask the organisers for the correct link.");
+          return;
+        }
+
+        setTournament(data);
+      } catch (err) {
+        setError("Unable to load tournament.");
+      }
     }
 
-    const all = loadTournaments();
+    load();
+  }, [tournamentName]);
 
-    // IMPORTANT: tournament names are keys
-    const tournament = all[tParam];
-
-    if (!tournament) {
-      setMsg("Tournament not found. Ask the organisers for the correct link.");
-      return;
-    }
-
-    setTournamentName(tParam);
-
-    if (!tournament.matches || tournament.matches.length === 0) {
-      setMsg("No matches available yet.");
-      return;
-    }
-
-    // Current round = last round
-    const currentRound = tournament.matches[tournament.matches.length - 1];
-    setRound(currentRound);
-  }, [tParam]);
-
-  if (msg) {
-    return <div className="page"><h3>{msg}</h3></div>;
+  if (error) {
+    return <div className="page"><h2>{error}</h2></div>;
   }
 
-  if (!round) {
-    return <div className="page"><h3>Loading…</h3></div>;
+  if (!tournament) {
+    return <div className="page"><h2>Loading…</h2></div>;
   }
 
   return (
     <div className="page">
       <h2>{tournamentName}</h2>
-      <h3>Current Round</h3>
+      <h3>Matches (Player Entry)</h3>
 
-      {round.map((m, i) => (
-        <div key={i} className="match-card">
-          <strong>{m.team1}</strong> vs <strong>{m.team2}</strong>
-          <div>Green {m.green}, Rink {m.rink}</div>
+      {tournament.matches.length === 0 && (
+        <p>No matches yet.</p>
+      )}
+
+      {tournament.matches.map((round, rIdx) => (
+        <div key={rIdx} className="round-block">
+          <h4>Round {rIdx + 1}</h4>
+
+          {round.map((m, idx) => (
+            <div key={idx} className="match-card">
+              <strong>{m.team1}</strong> vs <strong>{m.team2}</strong>
+              <div>Green {m.green}, Rink {m.rink}</div>
+              <div>Status: {m.verified ? "Verified" : "Pending"}</div>
+            </div>
+          ))}
         </div>
       ))}
     </div>
