@@ -1,110 +1,67 @@
 import { useState } from "react";
-
+import { saveTournament } from "../utils/api";
+import { setActiveTournament } from "../utils/storage";
 
 export default function NewTournament() {
   const [name, setName] = useState("");
   const [numTeams, setNumTeams] = useState(4);
-  const [teams, setTeams] = useState(["", "", "", ""]);
-  const [scoringMethod, setScoringMethod] = useState("standard");
+  const [teams, setTeams] = useState(Array(4).fill(""));
+  const [scoringMethod, setScoringMethod] = useState("skins");
 
-  // Keep teams array in sync with numTeams
+  // Update number of teams and resize team list
   const handleNumTeamsChange = (e) => {
-    const value = parseInt(e.target.value, 10);
-    if (Number.isNaN(value) || value < 2) {
-      setNumTeams(2);
-      setTeams((prev) => prev.slice(0, 2));
-      return;
-    }
-
-    setNumTeams(value);
-
+    const n = Math.max(2, parseInt(e.target.value || "2", 10));
+    setNumTeams(n);
     setTeams((prev) => {
-      if (value > prev.length) {
-        return [...prev, ...Array(value - prev.length).fill("")];
-      } else {
-        return prev.slice(0, value);
-      }
-    });
-  };
-  
-
-  const updateTeamName = (index, value) => {
-    setTeams((prev) => {
-      const next = [...prev];
-      next[index] = value;
-      return next;
+      const copy = [...prev];
+      while (copy.length < n) copy.push("");
+      return copy.slice(0, n);
     });
   };
 
- const createTournament = async () => {
-  const trimmedName = name.trim();
-  if (!trimmedName) {
-    alert("Please enter a tournament name.");
-    return;
-  }
-
-  const trimmedTeams = teams.map(t => t.trim()).filter(Boolean);
-  if (trimmedTeams.length < 2) {
-    alert("Please enter at least 2 team names.");
-    return;
-  }
-
-  const tournamentData = {
-    name: trimmedName,
-    teams: trimmedTeams,
-    scoringMethod,
-    matches: [],
-    created: Date.now(),
+  const handleTeamNameChange = (index, value) => {
+    setTeams((prev) => {
+      const copy = [...prev];
+      copy[index] = value;
+      return copy;
+    });
   };
 
-  await saveTournament(trimmedName, tournamentData);
-  setActiveTournament(trimmedName);
-
-  window.location.href = "/";
-};
-
-
-
-    const trimmedTeams = teams.map((t) => t.trim()).filter(Boolean);
-    if (trimmedTeams.length < 2) {
-      alert("Please enter at least 2 team names.");
+  const createTournament = async () => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      alert("Please enter a tournament name.");
       return;
     }
 
-    
-
-    if (all[trimmedName]) {
-      const overwrite = window.confirm(
-        `A tournament called "${trimmedName}" already exists. Overwrite it?`
-      );
-      if (!overwrite) return;
+    const cleanedTeams = teams.map(t => t.trim()).filter(Boolean);
+    if (cleanedTeams.length < 2) {
+      alert("Please enter at least two team names.");
+      return;
     }
 
-    // ✅ Unified tournament shape (Option A)
-    all[trimmedName] = {
+    const tournamentData = {
       name: trimmedName,
-      teams: trimmedTeams,          // <— team list here
-      scoringMethod,                // "standard" or "skins"
-      matches: [],                  // rounds will be generated later
-      results: {}                   // reserved for future use
+      teams: cleanedTeams,
+      scoringMethod,
+      matches: [],
+      created: Date.now(),
     };
 
-    
-
+    await saveTournament(trimmedName, tournamentData);
     setActiveTournament(trimmedName);
 
-    // Go back to Dashboard (home page)
+    // Go back to dashboard
     window.location.href = "/";
   };
 
-  //return (
+  return (
     <div className="page">
       <h2>Create New Tournament</h2>
 
       <div className="form-group">
-        <label className="form-label">Tournament Name</label>
+        <label>Tournament name</label>
         <input
-          className="form-input"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Enter tournament name"
@@ -112,9 +69,8 @@ export default function NewTournament() {
       </div>
 
       <div className="form-group">
-        <label className="form-label">Number of Teams</label>
+        <label>Number of teams</label>
         <input
-          className="form-input"
           type="number"
           min="2"
           value={numTeams}
@@ -123,32 +79,30 @@ export default function NewTournament() {
       </div>
 
       <div className="form-group">
-        <label className="form-label">Scoring Method</label>
+        <label>Scoring method</label>
         <select
-          className="form-input"
           value={scoringMethod}
           onChange={(e) => setScoringMethod(e.target.value)}
         >
-          <option value="standard">Standard (total shots)</option>
-          <option value="skins">Skins (3 × 5 ends)</option>
+          <option value="skins">Skins</option>
+          <option value="standard">Standard</option>
         </select>
       </div>
 
-      <h3>Team Names</h3>
-      {Array.from({ length: numTeams }, (_, i) => (
-        <div key={i} className="form-group">
+      <h3>Teams</h3>
+      {teams.map((team, idx) => (
+        <div key={idx} className="form-group">
           <input
-            className="form-input"
-            placeholder={`Team ${i + 1}`}
-            value={teams[i] || ""}
-            onChange={(e) => updateTeamName(i, e.target.value)}
+            value={team}
+            onChange={(e) => handleTeamNameChange(idx, e.target.value)}
+            placeholder={`Team ${idx + 1}`}
           />
         </div>
       ))}
 
-      <button className="form-button" onClick={createTournament}>
+      <button className="btn-primary" onClick={createTournament}>
         Create Tournament
       </button>
     </div>
-  //);
-
+  );
+}
