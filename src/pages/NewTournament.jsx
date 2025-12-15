@@ -26,6 +26,7 @@ export default function NewTournament() {
       }
     });
   };
+  
 
   const updateTeamName = (index, value) => {
     setTeams((prev) => {
@@ -35,24 +36,33 @@ export default function NewTournament() {
     });
   };
 
-  const createTournament = async () => {
-    const trimmedName = name.trim();
-    if (!trimmedName) {
-      alert("Please enter a tournament name.");
-      return;
-    }
-	
-	const tournamentData = {
-		teams,
-		matches: [],
-		mode,
-		created: Date.now(),
-	};
+ const createTournament = async () => {
+  const trimmedName = name.trim();
+  if (!trimmedName) {
+    alert("Please enter a tournament name.");
+    return;
+  }
 
-	await saveTournament(trimmedName, tournamentData);
+  const trimmedTeams = teams.map(t => t.trim()).filter(Boolean);
+  if (trimmedTeams.length < 2) {
+    alert("Please enter at least 2 team names.");
+    return;
+  }
 
-	setActiveTournament(trimmedName);
+  const tournamentData = {
+    name: trimmedName,
+    teams: trimmedTeams,
+    scoringMethod,
+    matches: [],
+    created: Date.now(),
   };
+
+  await saveTournament(trimmedName, tournamentData);
+  setActiveTournament(trimmedName);
+
+  window.location.href = "/";
+};
+;
 
 
     const trimmedTeams = teams.map((t) => t.trim()).filter(Boolean);
