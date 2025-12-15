@@ -35,10 +35,11 @@ export default function App() {
 			}
 		/>
 		<Route 
-			path-"/standings" element{
-				<Standings>
-					<Standings />
-				</Standings>
+			path="/standings"
+			element{
+			<ProtectedPage>
+				<Standings />
+			</ProtectedPage>
 		}	/>
 		<Route path="/summary" element={
 			<ProtectedPage>
