@@ -1,9 +1,5 @@
 import { useState } from "react";
-import {
-  loadTournaments,
-  saveTournaments,
-  setActiveTournament
-} from "../utils/storage";
+
 
 export default function NewTournament() {
   const [name, setName] = useState("");
@@ -39,7 +35,7 @@ export default function NewTournament() {
     });
   };
 
-  const createTournament = () => {
+  const createTournament = async () => {
     const trimmedName = name.trim();
     if (!trimmedName) {
       alert("Please enter a tournament name.");
