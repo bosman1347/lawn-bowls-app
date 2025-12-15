@@ -41,6 +41,7 @@ export default function App() {
 			</ProtectedPage>
 		} />
 		<Route path="/player" element={<PlayerEntry />} />
+		<Route path-"/standings" element{<Standings /> />
       </Routes>
     </Router>
   );
