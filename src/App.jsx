@@ -36,7 +36,7 @@ export default function App() {
 		/>
 		<Route 
 			path="/standings"
-			element{
+			element={
 			<ProtectedPage>
 				<Standings />
 			</ProtectedPage>
