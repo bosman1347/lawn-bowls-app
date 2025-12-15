@@ -45,6 +45,19 @@ export default function NewTournament() {
       alert("Please enter a tournament name.");
       return;
     }
+	
+	const tournamentData = {
+		teams,
+		matches: [],
+		mode,
+		created: Date.now(),
+	};
+
+	await saveTournament(trimmedName, tournamentData);
+
+	setActiveTournament(trimmedName);
+  };
+
 
     const trimmedTeams = teams.map((t) => t.trim()).filter(Boolean);
     if (trimmedTeams.length < 2) {
@@ -52,7 +65,7 @@ export default function NewTournament() {
       return;
     }
 
-    const all = loadTournaments();
+    //const all = loadTournaments();
 
     if (all[trimmedName]) {
       const overwrite = window.confirm(
@@ -70,7 +83,8 @@ export default function NewTournament() {
       results: {}                   // reserved for future use
     };
 
-    saveTournaments(all);
+    import { saveTournament } from "../utils/api";
+
     setActiveTournament(trimmedName);
 
     // Go back to Dashboard (home page)
