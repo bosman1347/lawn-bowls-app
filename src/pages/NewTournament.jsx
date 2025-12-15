@@ -150,5 +150,5 @@ export default function NewTournament() {
         Create Tournament
       </button>
     </div>
-  );
+  //);
 
