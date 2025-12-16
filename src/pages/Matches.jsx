@@ -231,6 +231,9 @@ export default function Matches() {
       return next;
     });
   };
+  
+  await saveTournament(activeTournamentName, tournament);
+
 
   // Download A6 scorecards ZIP (one card per PDF)
   const handleDownloadScorecardsZip = async () => {

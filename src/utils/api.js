@@ -15,3 +15,4 @@ export async function saveTournament(name, data) {
 
   if (!res.ok) throw new Error("Failed to save tournament");
 }
+
