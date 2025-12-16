@@ -9,6 +9,8 @@ import {
   setActiveTournament,
 } from "../utils/storage";
 
+import { saveTournament, loadAllTournaments } from "../utils/api";
+
 import { generateNextRound } from "../utils/pairings";
 import { computeStandings } from "../utils/standings";
 
@@ -85,40 +87,39 @@ export default function Dashboard() {
   // -----------------------------
   // Generate NEXT ROUND
   // -----------------------------
-  const handleGenerateNextRound = () => {
-    const all = loadTournaments();
-    const name = getActiveTournament();
+  const handleGenerateNextRound = async () => {
+	const name = getActiveTournament();
+	if (!name) {
+		alert("No active tournament");
+		return;
+	}
 
-    if (!name || !all[name]) {
-      alert("No active tournament selected.");
-      return;
-    }
+	const all = await loadAllTournaments();
+	const tournament = all[name];
 
-    const tournament = all[name];
-    const previousRounds = tournament.matches || [];
+	if (!tournament) {
+		alert("Tournament not found");
+		return;
+	}
 
-    let standings;
+	const previousRounds = tournament.matches || [];
+	const standings = tournament.teams.map(t => ({ team: t }));
 
-    if (previousRounds.length === 0) {
-      // Round 1 – no standings yet
-      standings = tournament.teams.map((t) => ({ team: t }));
-    } else {
-      standings = computeStandings(previousRounds);
-    }
+	const nextRound = generateNextRound(standings, previousRounds);
 
-    const nextRound = generateNextRound(standings, previousRounds);
+	if (!nextRound || nextRound.length === 0) {
+		alert("Could not generate new round");
+		return;
+	}
 
-    if (!nextRound || nextRound.length === 0) {
-      alert("Could not generate new round.");
-      return;
-    }
+	tournament.matches = [...previousRounds, nextRound];
 
-    tournament.matches = [...previousRounds, nextRound];
-    all[name] = tournament;
-    saveTournaments(all);
+	await saveTournament(name, tournament);
 
-    alert(`Round ${tournament.matches.length} generated.`);
-  };
+	// reload page state (simple & safe)
+	window.location.reload();
+ };
+
 
   // -----------------------------
   // QR CODE BUILDER
