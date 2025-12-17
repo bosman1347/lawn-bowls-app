@@ -5,8 +5,9 @@ import { loadAllTournaments } from "../utils/api";
 
 export default function Standings() {
   const [params] = useSearchParams();
-  const urlTournament = params.get("t");
-
+  const urlTournament = params.get("t")
+   ? decodeURIComponent(params.get("t"))
+    : null;
   const [tournamentName, setTournamentName] = useState("");
   const [matches, setMatches] = useState([]);
   const [error, setError] = useState("");
