@@ -4,6 +4,18 @@ import {
   getActiveTournament
 } from "../utils/storage";
 
+import { useSearchParams } from "react-router-dom";
+
+const [params] = useSearchParams();
+const urlTournament = params.get("t");
+const active = getActiveTournament();
+const tournamentName = urlTournament || active;
+
+if (!tournamentName) {
+  return <div>No tournament selected</div>;
+}
+
+
 export default function Standings() {
   const [tournamentName, setTournamentName] = useState("");
   const [matches, setMatches] = useState([]);
@@ -198,13 +210,25 @@ export default function Standings() {
     );
   }
 
-  if (!tournamentName) {
+  /*if (!tournamentName) {
     return (
       <div className="page">
         <h2>No active tournament</h2>
       </div>
     );
   }
+
+  import { useSearchParams } from "react-router-dom";*//*
+
+const [params] = useSearchParams();
+const urlTournament = params.get("t");
+const active = getActiveTournament();
+const tournamentName = urlTournament || active;
+
+if (!tournamentName) {
+  return <div>No tournament selected</div>;
+}*/
+
 
   return (
     <div className="page">
