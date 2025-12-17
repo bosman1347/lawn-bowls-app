@@ -114,6 +114,7 @@ export default function Dashboard() {
       return;
     }
 
+    
     tournament.matches = [...previousRounds, nextRound];
     await saveTournament(name, tournament);
 
