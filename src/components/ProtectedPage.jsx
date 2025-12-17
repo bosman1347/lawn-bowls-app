@@ -1,9 +1,20 @@
-import { Navigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { isAdminUnlocked } from "../utils/auth";
+import PinEntry from "../pages/PinEntry";
 
 export default function ProtectedPage({ children }) {
-  if (!isAdminUnlocked()) {
-    return <Navigate to="/pin" replace />;
+  const [params] = useSearchParams();
+  const isPlayer = params.has("t"); // QR / phone mode
+
+  // Players are allowed through without PIN
+  if (isPlayer) {
+    return children;
   }
+
+  // Admin requires PIN
+  if (!isAdminUnlocked()) {
+    return <PinEntry />;
+  }
+
   return children;
 }
