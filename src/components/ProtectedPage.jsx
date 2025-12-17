@@ -1,6 +1,6 @@
 import { useSearchParams } from "react-router-dom";
 import { isAdminUnlocked } from "../utils/auth";
-import PinEntry from "src/components/PinEntry";
+import PinEntry from "../pages/PinEntry";
 
 export default function ProtectedPage({ children }) {
   const [params] = useSearchParams();
