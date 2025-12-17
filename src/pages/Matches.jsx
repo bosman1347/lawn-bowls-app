@@ -205,7 +205,7 @@ export default function Matches() {
   };
 
   // Toggle verification / lock
-  const toggleVerified = (roundIndex, matchIndex) => {
+  const toggleVerified = async (roundIndex, matchIndex) => {
     setMatches((prev) => {
       const next = prev.map((round, ri) => {
         if (ri !== roundIndex) return round;
@@ -230,9 +230,10 @@ export default function Matches() {
       saveMatchesToStorage(next);
       return next;
     });
+    await saveTournament(activeTournamentName, tournament);
   };
   
-  await saveTournament(activeTournamentName, tournament);
+  
 
 
   // Download A6 scorecards ZIP (one card per PDF)
