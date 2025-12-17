@@ -11,9 +11,7 @@ const urlTournament = params.get("t");
 const active = getActiveTournament();
 const tournamentName = urlTournament || active;
 
-if (!tournamentName) {
-  return <div>No tournament selected</div>;
-}
+
 
 
 export default function Standings() {
@@ -223,11 +221,11 @@ export default function Standings() {
 const [params] = useSearchParams();
 const urlTournament = params.get("t");
 const active = getActiveTournament();
-const tournamentName = urlTournament || active;
+const tournamentName = urlTournament || active;*/
 
 if (!tournamentName) {
   return <div>No tournament selected</div>;
-}*/
+}
 
 
   return (
