@@ -3,7 +3,8 @@ import { useSearchParams } from "react-router-dom";
 import { resolveTournament } from "../utils/tournamentContext";
 import { loadTournament, saveTournament } from "../utils/api";
 import { isAdminUnlocked } from "../utils/auth";
-import PinEntry from "./PinEntry";
+import PinEntry from "../components/PinEntry";
+
 
 export default function Matches() {
   const [searchParams] = useSearchParams();
