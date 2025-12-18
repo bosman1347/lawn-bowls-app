@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { resolveTournament } from "../utils/tournamentContext";
-import { loadTournament } from "../utils/api";
+import { loadAllTournaments } from "../utils/api";
 
 export default function Standings() {
   const [searchParams] = useSearchParams();
