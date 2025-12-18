@@ -5,8 +5,8 @@ import {
 } from "../utils/storage";
 
 import { buildZIP } from "../utils/exporter";
-import ( useSearchParams ) from "react-router-dom";
-import ( resolveTournament ) from "../utils/tournamentContext";
+import { useSearchParams } from "react-router-dom";
+import { resolveTournament } from "../utils/tournamentContext";
 	
 	
 export default function Summary() {
