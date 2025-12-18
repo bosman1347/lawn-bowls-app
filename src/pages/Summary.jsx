@@ -5,14 +5,16 @@ import {
 } from "../utils/storage";
 
 import { buildZIP } from "../utils/exporter";
-
+import ( useSearchParams ) from "react-router-dom";
+import ( resolveTournament ) from "../utils/tournamentContext";
+	
+	
 export default function Summary() {
   const [tournamentName, setTournamentName] = useState("");
   const [matches, setMatches] = useState([]);
 
   useEffect(() => {
-    import ( useSearchParams ) from "react-router-dom";
-	import ( resolveTournament ) from "../utils/tournamentContext";
+    
 
 	const [searchParams] = useSearchParams();
 	const name = resolveTournament(searchParams);
