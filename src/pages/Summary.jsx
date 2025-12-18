@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   loadTournaments,
   getActiveTournament
 } from "../utils/storage";
 
 import { buildZIP } from "../utils/exporter";
-import { useSearchParams } from "react-router-dom";
+
 import { resolveTournament } from "../utils/tournamentContext";
 	
 	
