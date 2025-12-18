@@ -20,7 +20,7 @@ import { resolveTournament } from "../utils/tournamentContext";
 */
 
 export default function Matches() {
-  const [tournamentName, setTournamentName] = useState("");
+  
   const [matches, setMatches] = useState([]); // array of rounds
   const [scoringMode, setScoringMode] = useState("standard"); // "standard" | "skins"
 
@@ -28,25 +28,37 @@ export default function Matches() {
   const [openRounds, setOpenRounds] = useState({});
   const saveTimeoutRef = useRef(null);
 
-  useEffect(() => {
-    const name = tournamentName();
-    if (!name) return;
+	const [searchParams] = useSearchParams();
+	const tournamentName = resolveTournament(searchParams);
+	
+	useEffect(() => {
+  if (!tournamentName) return;
 
-    const all = loadTournaments();
-    const data = all[name];
-    if (data) {
-      setTournamentName(name);
-      setMatches(data.matches || []);
-      setScoringMode(data.scoringMethod || "standard");
+  const all = loadTournaments();
+  const data = all[tournamentName];
 
-      // default: open only the latest round
-      const lastIndex = (data.matches || []).length - 1;
-      const initOpen = {};
-      if (lastIndex >= 0) initOpen[lastIndex] = true;
-      setOpenRounds(initOpen);
-    }
-  }, []);
+  if (!data) return;
 
+  setMatches(data.matches || []);
+  setScoringMode(data.scoringMethod || "standard");
+
+  const lastIndex = (data.matches || []).length - 1;
+  const initOpen = {};
+  if (lastIndex >= 0) initOpen[lastIndex] = true;
+  setOpenRounds(initOpen);
+}, [tournamentName]);
+
+   // 🚨 Guard: no tournament context
+	if (!tournamentName) {
+	return (
+    <div className="page">
+      <h2>No active tournament</h2>
+      <p>Please scan the correct QR code or select a tournament.</p>
+    </div>
+  );
+}
+
+  
   // Debounced save helper
   const saveMatchesToStorage = (latestMatches) => {
     if (!tournamentName) return;
@@ -305,18 +317,7 @@ export default function Matches() {
     }
   };
 
-	const [searchParams] = useSearchParams();
-	const tournamentName = resolveTournament(searchParams);
-
-	if (!tournamentName) {
-		return (
-			<div className="page">
-				<h2>No active tournament</h2>
-				<p>Please scan the correct QR code or select a tournament.</p>
-			</div>
-		);
-	}
-
+	//
 
   // Helper: render a single match card (keeps UI consistent)
   const renderMatchCard = (m, rIndex, mIndex) => {
