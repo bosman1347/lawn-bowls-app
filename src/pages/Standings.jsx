@@ -13,7 +13,7 @@ export default function Standings() {
   }
 
   useEffect(() => {
-    loadAllTournament(tournamentName).then((data) => {
+    loadAllTournaments(tournamentName).then((data) => {
       if (!data) return;
 
       const standings = {};

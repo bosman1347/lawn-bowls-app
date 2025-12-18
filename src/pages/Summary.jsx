@@ -13,7 +13,7 @@ export default function Summary() {
   }
 
   useEffect(() => {
-    loadAllTournament(tournamentName).then(setData);
+    loadAllTournaments(tournamentName).then(setData);
   }, [tournamentName]);
 
   if (!data) return <div className="page">Loading…</div>;
