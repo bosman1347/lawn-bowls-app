@@ -11,8 +11,8 @@ export default function Summary() {
   const [matches, setMatches] = useState([]);
 
   useEffect(() => {
-    import { useSearchParams } from "react-router-dom";
-	import { resolveTournament } from "../utils/tournamentContext";
+    import ( useSearchParams ) from "react-router-dom";
+	import ( resolveTournament ) from "../utils/tournamentContext";
 
 	const [searchParams] = useSearchParams();
 	const name = resolveTournament(searchParams);
