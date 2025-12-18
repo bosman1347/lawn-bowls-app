@@ -31,6 +31,16 @@ export default function Matches() {
 	const [searchParams] = useSearchParams();
 	const tournamentName = resolveTournament(searchParams);
 	
+	 // 🚨 Guard: no tournament context
+	if (!tournamentName) {
+	return (
+    <div className="page">
+      <h2>No active tournament</h2>
+      <p>Please scan the correct QR code or select a tournament.</p>
+    </div>
+  );
+}
+	
 	useEffect(() => {
   if (!tournamentName) return;
 
@@ -48,15 +58,7 @@ export default function Matches() {
   setOpenRounds(initOpen);
 }, [tournamentName]);
 
-   // 🚨 Guard: no tournament context
-	if (!tournamentName) {
-	return (
-    <div className="page">
-      <h2>No active tournament</h2>
-      <p>Please scan the correct QR code or select a tournament.</p>
-    </div>
-  );
-}
+  
 
   
   // Debounced save helper
