@@ -1,143 +1,50 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { loadTournaments } from "../utils/storage";
-import { loadAllTournaments } from "../utils/api";
 import { resolveTournament } from "../utils/tournamentContext";
+import { loadTournament } from "../utils/api";
 
 export default function Standings() {
   const [searchParams] = useSearchParams();
   const tournamentName = resolveTournament(searchParams);
+  const [table, setTable] = useState([]);
 
-  const [matches, setMatches] = useState([]);
-  const [error, setError] = useState("");
+  if (!tournamentName) {
+    return <div className="page">No active tournament</div>;
+  }
 
   useEffect(() => {
-    async function load() {
-      try {
-        if (!tournamentName) {
-          setError("No active tournament");
-          return;
+    loadTournament(tournamentName).then((data) => {
+      if (!data) return;
+
+      const standings = {};
+      data.matches.flat().forEach(m => {
+        if (!m.result) return;
+
+        for (const t of [m.team1, m.team2]) {
+          standings[t] ||= { team: t, mp: 0 };
         }
 
-        // Phone (QR)
-        if (searchParams.get("t")) {
-          const all = await loadAllTournaments();
-          const data = all[tournamentName];
-          if (!data) {
-            setError("Tournament not found");
-            return;
-          }
-          setMatches(data.matches || []);
-          return;
-        }
+        standings[m.team1].mp += m.result.mp1 || 0;
+        standings[m.team2].mp += m.result.mp2 || 0;
+      });
 
-        // Desktop
-        const all = loadTournaments();
-        const data = all[tournamentName];
-        if (!data) {
-          setError("Tournament not found");
-          return;
-        }
-        setMatches(data.matches || []);
-      } catch {
-        setError("Unable to load standings");
-      }
-    }
-
-    load();
+      setTable(Object.values(standings));
+    });
   }, [tournamentName]);
-
-  const standings = useMemo(() => computeStandings(matches), [matches]);
-
-  if (error) {
-    return <div className="page"><h2>{error}</h2></div>;
-  }
 
   return (
     <div className="page">
       <h2>Standings — {tournamentName}</h2>
-
-      <table className="standings-table">
-        <thead>
-          <tr>
-            <th>Pos</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th>
-            <th>SF</th><th>SA</th><th>SD</th><th>Pts</th>
-          </tr>
-        </thead>
+      <table>
         <tbody>
-          {standings.map((r, i) => (
-            <tr key={r.team}>
-              <td>{i + 1}</td>
-              <td>{r.team}</td>
-              <td>{r.played}</td>
-              <td>{r.won}</td>
-              <td>{r.drawn}</td>
-              <td>{r.lost}</td>
-              <td>{r.shotsFor}</td>
-              <td>{r.shotsAgainst}</td>
-              <td>{r.diff}</td>
-              <td>{r.points}</td>
+          {table.map(t => (
+            <tr key={t.team}>
+              <td>{t.team}</td>
+              <td>{t.mp}</td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
   );
-}
-
-/* ---------- helpers ---------- */
-
-function computeStandings(rounds = []) {
-  const table = {};
-
-  rounds.forEach(round => {
-    round.forEach(m => {
-      if (!m.verified) return;
-
-      if (!table[m.team1]) table[m.team1] = base(m.team1);
-      if (!table[m.team2]) table[m.team2] = base(m.team2);
-
-      const t1 = table[m.team1];
-      const t2 = table[m.team2];
-
-      let A = 0, B = 0, spA = 0, spB = 0;
-
-      (m.skins || []).forEach(s => {
-        A += s.a || 0;
-        B += s.b || 0;
-        if (s.a > s.b) spA += 1;
-        else if (s.b > s.a) spB += 1;
-        else { spA += 0.5; spB += 0.5; }
-      });
-
-      t1.played++; t2.played++;
-      t1.shotsFor += A; t1.shotsAgainst += B;
-      t2.shotsFor += B; t2.shotsAgainst += A;
-      t1.diff = t1.shotsFor - t1.shotsAgainst;
-      t2.diff = t2.shotsFor - t2.shotsAgainst;
-
-      let bonusA = 0, bonusB = 0;
-      if (A > B) bonusA = 2;
-      else if (B > A) bonusB = 2;
-      else { bonusA = 1; bonusB = 1; }
-
-      t1.points += spA + bonusA;
-      t2.points += spB + bonusB;
-
-      if (spA + bonusA > spB + bonusB) { t1.won++; t2.lost++; }
-      else if (spB + bonusB > spA + bonusA) { t2.won++; t1.lost++; }
-      else { t1.drawn++; t2.drawn++; }
-    });
-  });
-
-  return Object.values(table).sort(
-    (a, b) => b.points - a.points || b.diff - a.diff
-  );
-}
-
-function base(team) {
-  return {
-    team, played: 0, won: 0, drawn: 0, lost: 0,
-    points: 0, shotsFor: 0, shotsAgainst: 0, diff: 0
-  };
 }
