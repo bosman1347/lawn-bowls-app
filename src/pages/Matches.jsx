@@ -5,6 +5,9 @@ import {
   getActiveTournament,
 } from "../utils/storage";
 import { buildScorecardsZipForRound, buildScorecardsA4ForRound } from "../utils/scorecards";
+import { useSearchParams } from "react-router-dom";
+import { resolveTournament } from "../utils/tournamentContext";
+
 
 /*
  Matches.jsx
@@ -26,7 +29,7 @@ export default function Matches() {
   const saveTimeoutRef = useRef(null);
 
   useEffect(() => {
-    const name = getActiveTournament();
+    const name = tournamentName();
     if (!name) return;
 
     const all = loadTournaments();
@@ -302,13 +305,18 @@ export default function Matches() {
     }
   };
 
-  if (!tournamentName) {
-    return (
-      <div className="page">
-        <h2>No active tournament</h2>
-      </div>
-    );
-  }
+	const [searchParams] = useSearchParams();
+	const tournamentName = resolveTournament(searchParams);
+
+	if (!tournamentName) {
+		return (
+			<div className="page">
+				<h2>No active tournament</h2>
+				<p>Please scan the correct QR code or select a tournament.</p>
+			</div>
+		);
+	}
+
 
   // Helper: render a single match card (keeps UI consistent)
   const renderMatchCard = (m, rIndex, mIndex) => {
