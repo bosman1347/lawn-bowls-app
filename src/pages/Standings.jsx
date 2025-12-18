@@ -1,71 +1,56 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { loadTournaments, getActiveTournament } from "../utils/storage";
+import { loadTournaments } from "../utils/storage";
 import { loadAllTournaments } from "../utils/api";
+import { resolveTournament } from "../utils/tournamentContext";
 
 export default function Standings() {
-  const [params] = useSearchParams();
-  const urlTournament = params.get("t")
-   ? decodeURIComponent(params.get("t"))
-    : null;
-  const [tournamentName, setTournamentName] = useState("");
+  const [searchParams] = useSearchParams();
+  const tournamentName = resolveTournament(searchParams);
+
   const [matches, setMatches] = useState([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
     async function load() {
       try {
-        // 📱 PHONE / QR MODE — URL PARAM IS KING
-        if (urlTournament) {
-          const all = await loadAllTournaments();
-          const data = all[urlTournament];
+        if (!tournamentName) {
+          setError("No active tournament");
+          return;
+        }
 
+        // Phone (QR)
+        if (searchParams.get("t")) {
+          const all = await loadAllTournaments();
+          const data = all[tournamentName];
           if (!data) {
-            setError("Tournament not found.");
+            setError("Tournament not found");
             return;
           }
-
-          setTournamentName(urlTournament);
           setMatches(data.matches || []);
-          return; // 🚨 DO NOT FALL THROUGH
-        }
-
-        // 🖥 DESKTOP / ADMIN MODE
-        const active = getActiveTournament();
-        if (!active) {
-          setError("No active tournament.");
           return;
         }
 
+        // Desktop
         const all = loadTournaments();
-        const data = all[active];
-
+        const data = all[tournamentName];
         if (!data) {
-          setError("Tournament not found.");
+          setError("Tournament not found");
           return;
         }
-
-        setTournamentName(active);
         setMatches(data.matches || []);
-      } catch (e) {
-        setError("Unable to load standings.");
+      } catch {
+        setError("Unable to load standings");
       }
     }
 
     load();
-  }, [urlTournament]);
+  }, [tournamentName]);
 
-  const standings = useMemo(
-    () => computeStandings(matches),
-    [JSON.stringify(matches)]
-  );
+  const standings = useMemo(() => computeStandings(matches), [matches]);
 
   if (error) {
-    return (
-      <div className="page">
-        <h2>{error}</h2>
-      </div>
-    );
+    return <div className="page"><h2>{error}</h2></div>;
   }
 
   return (
@@ -75,16 +60,8 @@ export default function Standings() {
       <table className="standings-table">
         <thead>
           <tr>
-            <th>Pos</th>
-            <th>Team</th>
-            <th>P</th>
-            <th>W</th>
-            <th>D</th>
-            <th>L</th>
-            <th>SF</th>
-            <th>SA</th>
-            <th>SD</th>
-            <th>Pts</th>
+            <th>Pos</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th>
+            <th>SF</th><th>SA</th><th>SD</th><th>Pts</th>
           </tr>
         </thead>
         <tbody>
@@ -108,13 +85,13 @@ export default function Standings() {
   );
 }
 
-/* ---------------- helpers ---------------- */
+/* ---------- helpers ---------- */
 
-function computeStandings(rounds) {
+function computeStandings(rounds = []) {
   const table = {};
 
-  (rounds || []).forEach(round => {
-    (round || []).forEach(m => {
+  rounds.forEach(round => {
+    round.forEach(m => {
       if (!m.verified) return;
 
       if (!table[m.team1]) table[m.team1] = base(m.team1);
@@ -136,6 +113,8 @@ function computeStandings(rounds) {
       t1.played++; t2.played++;
       t1.shotsFor += A; t1.shotsAgainst += B;
       t2.shotsFor += B; t2.shotsAgainst += A;
+      t1.diff = t1.shotsFor - t1.shotsAgainst;
+      t2.diff = t2.shotsFor - t2.shotsAgainst;
 
       let bonusA = 0, bonusB = 0;
       if (A > B) bonusA = 2;
@@ -158,14 +137,7 @@ function computeStandings(rounds) {
 
 function base(team) {
   return {
-    team,
-    played: 0,
-    won: 0,
-    drawn: 0,
-    lost: 0,
-    points: 0,
-    shotsFor: 0,
-    shotsAgainst: 0,
-    diff: 0
+    team, played: 0, won: 0, drawn: 0, lost: 0,
+    points: 0, shotsFor: 0, shotsAgainst: 0, diff: 0
   };
 }
