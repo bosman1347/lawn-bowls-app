@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { resolveTournament } from "../utils/tournamentContext";
-import { loadTournament, saveTournament } from "../utils/api";
+import { loadAllTournaments, saveTournament } from "../utils/api";
 import { isAdminUnlocked } from "../utils/auth";
 import PinEntry from "../components/PinEntry";
 
@@ -30,16 +30,23 @@ export default function Matches() {
   }
 
   // 📥 Load from backend ONLY
-  useEffect(() => {
-    loadTournament(tournamentName).then((data) => {
-      if (!data) return;
+useEffect(() => {
+  if (!tournamentName) return;
 
-      setTournament(data);
+  async function load() {
+    const all = await loadAllTournaments();
+    const data = all[tournamentName];
+    if (!data) return;
 
-      const last = (data.matches || []).length - 1;
-      if (last >= 0) setOpenRounds({ [last]: true });
-    });
-  }, [tournamentName]);
+    setTournament(data);
+
+    const last = (data.matches || []).length - 1;
+    if (last >= 0) setOpenRounds({ [last]: true });
+  }
+
+  load();
+}, [tournamentName]);
+
 
   // 💾 Debounced backend save
   const scheduleSave = (updated) => {
