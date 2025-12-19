@@ -6,6 +6,11 @@ export async function loadAllTournaments() {
   return await res.json();
 }
 
+export async function loadTournament(name) {
+  const all = await loadAllTournaments();
+  return all[name] || null;
+}
+
 export async function saveTournament(name, data) {
   const res = await fetch("/api/tournaments", {
     method: "POST",
@@ -15,4 +20,3 @@ export async function saveTournament(name, data) {
 
   if (!res.ok) throw new Error("Failed to save tournament");
 }
-
