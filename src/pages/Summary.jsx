@@ -13,7 +13,7 @@ export default function Summary() {
   useEffect(() => {
     if (!tournamentName) return;
 
-    loadTournament(tournamentName).then((tournament) => {
+    loadAllTournaments(tournamentName).then((tournament) => {
       if (!tournament) {
         setError("Tournament not found");
         return;
