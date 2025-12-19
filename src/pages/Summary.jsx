@@ -1,80 +1,74 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { loadAllTournaments } from "../utils/api";
-import { resolveTournament } from "../utils/tournamentContext";
+import { loadTournament } from "../utils/api";
 
 export default function Summary() {
   const [searchParams] = useSearchParams();
-  const tournamentName = resolveTournament(searchParams);
+  const tournamentName = searchParams.get("t");
 
-  const [matches, setMatches] = useState([]);
-  const [error, setError] = useState("");
+  const [tournament, setTournament] = useState(null);
 
   useEffect(() => {
     if (!tournamentName) return;
 
-    loadAllTournaments(tournamentName).then((tournament) => {
-      if (!tournament) {
-        setError("Tournament not found");
-        return;
-      }
-
-      const verified = [];
-
-      (tournament.matches || []).forEach((round, rIndex) => {
-        round.forEach((m) => {
-          if (m.verified) {
-            verified.push({
-              round: rIndex + 1,
-              ...m,
-            });
-          }
-        });
-      });
-
-      setMatches(verified);
-    });
+    loadTournament(tournamentName).then(setTournament);
   }, [tournamentName]);
 
   if (!tournamentName) {
     return (
       <div className="page">
-        <h2>No active tournament</h2>
-        <p>Please scan the QR code or select a tournament.</p>
+        <h2>No tournament specified</h2>
+        <p>Please scan the correct QR code.</p>
       </div>
     );
   }
 
-  if (error) {
-    return <div className="page"><h2>{error}</h2></div>;
+  if (!tournament) {
+    return <div className="page"><h2>Loading summary…</h2></div>;
+  }
+
+  const rounds = tournament.matches || [];
+  const verifiedRounds = rounds.map((round) =>
+    round.filter((m) => m.verified)
+  ).filter((r) => r.length > 0);
+
+  if (verifiedRounds.length === 0) {
+    return <div className="page"><h2>No verified matches yet</h2></div>;
   }
 
   return (
     <div className="page">
       <h2>Match Summary — {tournamentName}</h2>
 
-      {matches.length === 0 ? (
-        <p>No verified matches yet.</p>
-      ) : (
-        matches.map((m, i) => (
-          <div key={i} className="summary-card">
-            <strong>Round {m.round}</strong>
-            <div>{m.team1} vs {m.team2}</div>
-            <div>
-              Shots: {m.total1} – {m.total2}
+      {verifiedRounds.map((round, rIndex) => (
+        <div key={rIndex} className="round-summary">
+          <h3>Round {rIndex + 1}</h3>
+
+          {round.map((m, i) => (
+            <div key={i} className="match-summary">
+              <strong>
+                {m.team1} vs {m.team2}
+              </strong>
+
+              <div className="summary-line">
+                Totals: {m.total1} – {m.total2}
+              </div>
+
+              <div className="summary-line">
+                Skins: {m.skins1} – {m.skins2}
+              </div>
+
+              <div className="summary-line">
+                Bonus: {m.bonus1} – {m.bonus2}
+              </div>
+
+              <div className="summary-line">
+                Match Points: {m.points1} – {m.points2}
+              </div>
             </div>
-            <div>
-              Skins: {m.skins1} – {m.skins2}
-            </div>
-            <div>
-              Bonus: {m.bonus1} – {m.bonus2}
-            </div>
-            <div>
-              Match Points: {m.matchPoints1} – {m.matchPoints2}
-            </div>
-          </div>
-        ))
-      )}
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
