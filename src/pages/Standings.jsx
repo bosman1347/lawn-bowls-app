@@ -150,3 +150,4 @@ export default function Standings() {
     </div>
   );
 }
+
