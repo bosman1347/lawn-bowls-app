@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { loadTournament } from "../utils/api";
+import { loadAllTournaments } from "../utils/api";
 import { resolveTournament } from "../utils/tournamentContext";
 
 export default function Summary() {
